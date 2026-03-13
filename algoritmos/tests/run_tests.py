@@ -16,6 +16,7 @@ import re
 import subprocess
 import sys
 import argparse
+import time
 
 # Directorio de este script
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -24,6 +25,16 @@ FLUJO_MAXIMO = os.path.join(TESTS_DIR, "flujo-maximo")
 
 # Nombre visible de cada implementación
 IMPL_DISPLAY_NAME = {"edmonds-karp-c": "Edmonds-Karp (C)"}
+
+# Nombres cortos para la tabla de tiempos
+IMPL_SHORT_NAME = {
+    "edmonds-karp": "EK Python",
+    "edmonds-karp-letras": "EK letras",
+    "edmonds-karp-c": "EK (C)",
+}
+
+# Implementaciones que comparten los mismos tests (flujo máximo) para comparar tiempos
+IMPL_EDMONDS_KARP_FAMILY = frozenset({"edmonds-karp", "edmonds-karp-letras", "edmonds-karp-c"})
 
 # Implementaciones: nombre -> (comando, cwd). Todo el código es Python 3.
 def get_impls():
@@ -72,8 +83,50 @@ def extract_flow_value(output):
     return last_flow
 
 
+def _imprimir_comparativa_tiempos(tiempos_ek, tests):
+    """Imprime tabla de tiempos entre las implementaciones Edmonds-Karp."""
+    if not tiempos_ek or not tests:
+        return
+    test_names = [t[0] for t in tests]
+    impls_orden = sorted(tiempos_ek.keys())
+    w_name = min(28, max(10, max(len(n) for n in test_names) + 2))
+    w_col = 11
+    sep = "  "
+    print("\n--- Comparativa de tiempos (Edmonds-Karp) ---")
+    header_cells = ["Test".ljust(w_name)] + [
+        IMPL_SHORT_NAME.get(i, IMPL_DISPLAY_NAME.get(i, i))[:w_col].ljust(w_col)
+        for i in impls_orden
+    ]
+    print("  " + sep.join(header_cells))
+    print("  " + "-" * (w_name + len(impls_orden) * (w_col + len(sep))))
+    totales = {impl: 0.0 for impl in impls_orden}
+    for name in test_names:
+        cells = [name[: w_name - 1].ljust(w_name)]
+        for impl in impls_orden:
+            t = tiempos_ek[impl].get(name)
+            if t is not None:
+                totales[impl] += t
+                cells.append(("%.3f s" % t).rjust(w_col))
+            else:
+                cells.append("-".rjust(w_col))
+        print("  " + sep.join(cells))
+    print("  " + "-" * (w_name + len(impls_orden) * (w_col + len(sep))))
+    row_total = ["TOTAL".ljust(w_name)] + [
+        ("%.3f s" % totales[impl]).rjust(w_col) for impl in impls_orden
+    ]
+    print("  " + sep.join(row_total))
+    if totales and totales[min(totales, key=totales.get)] > 0:
+        mas_rapido = min(totales, key=totales.get)
+        mas_lento = max(totales, key=totales.get)
+        ratio = totales[mas_lento] / totales[mas_rapido]
+        print("  (más rápido: %s, ~%.2fx respecto al más lento)" % (
+            IMPL_SHORT_NAME.get(mas_rapido, IMPL_DISPLAY_NAME.get(mas_rapido, mas_rapido)), ratio))
+
+
 def run_one_test(impl_name, cmd_and_cwd, test_path):
+    """Ejecuta un test. Devuelve (valor_flujo_o_None, error_o_None, tiempo_segundos)."""
     cmd, cwd = cmd_and_cwd
+    t0 = time.perf_counter()
     if test_path is None:
         # Sin entrada (ej. dinic con grafo interno)
         try:
@@ -88,10 +141,10 @@ def run_one_test(impl_name, cmd_and_cwd, test_path):
             out = out.decode("utf-8", errors="replace")
         except subprocess.TimeoutExpired:
             proc.kill()
-            return None, "timeout"
+            return None, "timeout", time.perf_counter() - t0
         except Exception as e:
-            return None, str(e)
-        return extract_flow_value(out), None
+            return None, str(e), time.perf_counter() - t0
+        return extract_flow_value(out), None, time.perf_counter() - t0
     with open(test_path, "rb") as f:
         try:
             proc = subprocess.Popen(
@@ -105,10 +158,10 @@ def run_one_test(impl_name, cmd_and_cwd, test_path):
             out = out.decode("utf-8", errors="replace")
         except subprocess.TimeoutExpired:
             proc.kill()
-            return None, "timeout"
+            return None, "timeout", time.perf_counter() - t0
         except Exception as e:
-            return None, str(e)
-    return extract_flow_value(out), None
+            return None, str(e), time.perf_counter() - t0
+    return extract_flow_value(out), None, time.perf_counter() - t0
 
 
 def main():
@@ -156,11 +209,14 @@ def main():
 
     total_ok = 0
     total_fail = 0
+    # Tiempos por implementación y test (solo para las 3 Edmonds-Karp)
+    tiempos_ek = {}  # impl_name -> { test_name -> segundos }
+
     for impl_name, cmd_cwd in impls.items():
         display = IMPL_DISPLAY_NAME.get(impl_name, impl_name)
         print("\n--- {} ---".format(display))
         if impl_name == "dinic":
-            got, err = run_one_test(impl_name, cmd_cwd, None)
+            got, err, _ = run_one_test(impl_name, cmd_cwd, None)
             if err:
                 print("  FAIL (dinic grafo interno): {}".format(err))
                 total_fail += 1
@@ -177,9 +233,39 @@ def main():
             else:
                 print("  OK   dinic grafo interno (flujo {}). Para validar: echo {} > dinic_expected.txt".format(got, got))
                 total_ok += 1
+            # Tests con grafos n2, n3, n4 (n1 ya cubierto arriba)
+            try:
+                grafos_script = os.path.join(TESTS_DIR, "test_dinic_grafos.py")
+                proc = subprocess.Popen(
+                    [sys.executable, grafos_script],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    cwd=REPO_ROOT,
+                )
+                out_grafos, _ = proc.communicate(timeout=60)
+                out_grafos = out_grafos.decode("utf-8", errors="replace")
+                for line in out_grafos.strip().splitlines():
+                    s = line.strip()
+                    if s.startswith("OK") and "dinic" in s:
+                        total_ok += 1
+                        print("  " + s)
+                    elif "FAIL" in s and "dinic" in s:
+                        total_fail += 1
+                        print("  " + s)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                total_fail += 1
+                print("  FAIL test_dinic_grafos: timeout")
+            except Exception as e:
+                total_fail += 1
+                print("  FAIL test_dinic_grafos: {}".format(e))
             continue
+        if impl_name in IMPL_EDMONDS_KARP_FAMILY:
+            tiempos_ek[impl_name] = {}
         for name, path, expected in tests:
-            got, err = run_one_test(impl_name, cmd_cwd, path)
+            got, err, elapsed = run_one_test(impl_name, cmd_cwd, path)
+            if impl_name in IMPL_EDMONDS_KARP_FAMILY:
+                tiempos_ek[impl_name][name] = elapsed
             if err:
                 print("  FAIL {}: {}".format(name, err))
                 total_fail += 1
@@ -196,6 +282,10 @@ def main():
                 total_fail += 1
 
     print("\nTotal: {} OK, {} FAIL".format(total_ok, total_fail))
+
+    # Comparativa de tiempos entre las implementaciones Edmonds-Karp
+    if len(tiempos_ek) >= 2:
+        _imprimir_comparativa_tiempos(tiempos_ek, tests)
     sys.exit(1 if total_fail else 0)
 
 

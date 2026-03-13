@@ -25,7 +25,7 @@ g = {"a" :["b", "e"],
 # tupla junto con la capacidad de la arista
 
 
-import practico1
+import probando
 def rlf(grafo):
     """
     Devuelve un coloreo propio usando la heuristica RLF
