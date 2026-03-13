@@ -126,7 +126,7 @@ class MatrizCap(object):
         matriz de capacidades.
         """
         cadena = ""
-        claves = self.matriz.keys()
+        claves = list(self.matriz.keys())
         claves.sort()
         for (x, y) in claves:
             flujo = str(self.matriz[(x, y)][1])

@@ -253,7 +253,7 @@ def caminoDFS(na,f,c):
         v = s[-1] # lo toma del final
         agrego = False
         for w in vecinosMas(v,na):
-            #print (v,w)
+            #print((v,w))
             if w not in visitado:
                 agrego = True 
                 visitado.append(w)
@@ -278,7 +278,7 @@ def ppcamino(c):
     result = ""
     try:
         fc = min([c[vw][0] for vw in c])
-    except:
+    except Exception:
         fc = 0
     
     v = "0"
@@ -287,8 +287,8 @@ def ppcamino(c):
     while w:
         try:
             assert (len(w) == 1)
-        except:
-            #print c
+        except Exception:
+            #print(c)
             raise KeyError
         w = w[0]
         if not c[v+w][1]: # no es backward
@@ -307,16 +307,16 @@ def actualizaNA(na,camino,f,c):
         if not camino[v+w][1]: # no es backward
             f[v+w] += fc
             na[v+w] = (na[v+w][0]-fc,na[v+w][1]) # o sea na[v+w][0] -= fc
-            print "\t\tLa cap de %s quedo en %s" % (v+w, c[v+w] - f[v+w])
+            print("\t\tLa cap de %s quedo en %s" % (v+w, c[v+w] - f[v+w]))
             if na[v+w][0] == 0:
-                print "\t\t\tSe saturo %s en el NA" % (v+w)
+                print("\t\t\tSe saturo %s en el NA" % (v+w))
                 del na[v+w]
         else: # es backward
             f[w+v] -= fc
             na[v+w] = (na[v+w][0]-fc,na[v+w][1]) # o sea na[v+w][0] -= fc
-            print "\t\tLa cap de %s quedo en %s" % (w+v, c[w+v] - f[w+v])
+            print("\t\tLa cap de %s quedo en %s" % (w+v, c[w+v] - f[w+v]))
             if na[v+w][0] == 0:
-                print "\t\t\tSe saturo %s en el NA" % (v+w)
+                print("\t\t\tSe saturo %s en el NA" % (v+w))
                 del na[v+w]
 
 def caminos(ne):
@@ -329,9 +329,9 @@ def caminos(ne):
     cca = 0
     aux = na(n,f)
     cna +=1
-    print ""
-    print "NA %s -----------" % cna
-    print aux
+    print("")
+    print("NA %s -----------" % cna)
+    print(aux)
     ppnetwork(aux,str(cna))
     while "1" in [k[1] for k in aux]:
         c = caminoDFS(aux,f,n)
@@ -344,7 +344,7 @@ def caminos(ne):
                     kt = k[0]+str(ord(k[1])-65-15+1)
                     result.add(kt)
         cca += 1
-        print "\tCam %s: %s" % (cca, ppcamino(c))
+        print("\tCam %s: %s" % (cca, ppcamino(c)))
         while "1" in [k[1] for k in c]:
             actualizaNA(aux,c,f,n)
             c = caminoDFS(aux,f,n)
@@ -357,14 +357,14 @@ def caminos(ne):
                         kt = k[0]+str(ord(k[1])-65-15+1)
                         result.add(kt)
             cca += 1
-            print "\tCam %s: %s" % (cca, ppcamino(c))
+            print("\tCam %s: %s" % (cca, ppcamino(c)))
         aux = na(n,f)
         cna +=1
-        print ""
-        print "NA %s -----------" % cna
-        print aux
+        print("")
+        print("NA %s -----------" % cna)
+        print(aux)
         ppnetwork(aux,str(cna))
     # para matchings return sorted(result)
     return f
 
-print caminos(nw)
+print(caminos(nw))

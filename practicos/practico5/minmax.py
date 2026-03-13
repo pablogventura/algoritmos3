@@ -26,6 +26,7 @@ e3 =[["31", "42", "7", "4", "11", "2", "7"],
 ["3", "10", "8", "4", "5", "99", "31"],
 ["31", "42", "10", "768", "6", "2", "3"]]
 
+from functools import reduce
 import dinic
 
 def minmax(mentra):
@@ -37,15 +38,15 @@ def minmax(mentra):
     
     result = []
     v = set(reduce(lambda x,y: list(x) + list(y),m))
-    v = map(int,list(v))
+    v = list(map(int, list(v)))
     v = sorted(v)
-    print v
+    print(v)
     while v:
-        umbral = v[len(v)/2]
-        print "el umbral es %s" % umbral
+        umbral = v[len(v)//2]
+        print("el umbral es %s" % umbral)
         nu = []
         for i in m:
-            #print i
+            #print(i)
             temp = ""
             for j in i:
                 if int(j) <= umbral:
@@ -55,16 +56,16 @@ def minmax(mentra):
             nu.append(temp)
         
         mat = dinic.caminos(mtog(nu))
-        print "el matchin es perfecto = %s" % esperfecto(mat,nu)
+        print("el matchin es perfecto = %s" % esperfecto(mat,nu))
         if esperfecto(mat,nu):
             #para un lado
-            v = v[:len(v)/2]
+            v = v[:len(v)//2]
             result = mat,umbral
         else:
             #para el otro
-            v = v[len(v)/2+1:]
-        print "ahora los valores posibles son %s" % v
-        print "-"*80
+            v = v[len(v)//2+1:]
+        print("ahora los valores posibles son %s" % v)
+        print("-"*80)
     return result
 
 

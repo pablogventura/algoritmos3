@@ -126,7 +126,7 @@ class MatrizCap(object):
         matriz de capacidades.
         """
         cadena = ""
-        claves = self.matriz.keys()
+        claves = list(self.matriz.keys())
         claves.sort()
         for (x, y) in claves:
             flujo = str(self.matriz[(x, y)][1])
@@ -135,14 +135,14 @@ class MatrizCap(object):
             elif x == resumidero:
                 x = "t"
             else:
-                x = chr(x)
-                
+                x = chr(x) if 0 <= x <= 0x10FFFF else str(x)
+
             if y == fuente:
                 y = "s"
             elif y == resumidero:
                 y = "t"
             else:
-                y = chr(y)
+                y = chr(y) if 0 <= y <= 0x10FFFF else str(y)
             cadena += "Lado " + x + "," + y + ": "
             cadena += flujo + "\n"
 

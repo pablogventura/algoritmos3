@@ -46,5 +46,5 @@ def mtog(m):
 
 import dinic
 
-print dinic.caminos(mtog(e1))
+print(dinic.caminos(mtog(e1)))
 

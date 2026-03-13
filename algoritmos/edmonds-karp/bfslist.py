@@ -11,8 +11,10 @@ def vtos(vertice):
         return "s"
     elif vertice == resumidero:
         return "t"
-    else:
+    elif 0 <= vertice <= 0x10FFFF:
         return chr(vertice)
+    else:
+        return str(vertice)
 
 class BFS(object):
 
@@ -40,7 +42,7 @@ class BFS(object):
                 self.linea2 += ",%s    " % vtos(fuente)
                 self.linea3 += ",%04d " % self._cap.capacidadActual(fuente,
                                                                   vecino)
-        iterador = self.bfs.keys() # una lista para poder ir iterando
+        iterador = list(self.bfs.keys())  # una lista para poder ir iterando
         iterador.sort()
         for key in iterador:
             elem = self.bfs[key]

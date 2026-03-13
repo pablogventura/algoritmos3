@@ -25,7 +25,7 @@ def main():
         result = ed.aumentar_flujo()
 
     if result == -1:
-        print "\nError al aumentar el flujo\n"
+        print("\nError al aumentar el flujo\n")
     else:
         ed.imprimir_flujo_maximal()
 

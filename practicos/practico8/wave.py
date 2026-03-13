@@ -1,3 +1,5 @@
+from functools import reduce
+
 nw={"0A":8,
     "0C":7,
     "0D":10,
@@ -98,11 +100,11 @@ def niveles(n):
     result = [["0"]]
     temp = []
     while set([x[0] for x in n.keys()] + [x[1] for x in n.keys()]) != set(reduce(lambda x,y:x+y,result)):
-        #print (set([x[0] for x in n.keys()] + [x[1] for x in n.keys()]), set(reduce(lambda x,y:x+y,result)))
+        #print((set([x[0] for x in n.keys()] + [x[1] for x in n.keys()]), set(reduce(lambda x,y:x+y,result))))
         temp = []
         for x in result[-1]:
             temp += vecinosMas(x,n)
-        #print (temp,soloprim(temp))
+        #print((temp,soloprim(temp)))
         temp = soloprim(temp)            
         result.append(temp)
     return result

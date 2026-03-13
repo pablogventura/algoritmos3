@@ -59,7 +59,7 @@ from numpy import matrix
 def mtoc(mat):
     result = ""
     m = matrix(mat)
-    print "TAM = %s" % len(m)
+    print("TAM = %s" % len(m))
     for x in range(len(m)):
         for y in range(len(m)):
             result += "Matriz[%s][%s] = %s;\n" % (x,y,m[x,y])

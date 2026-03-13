@@ -160,8 +160,8 @@ def ppcamino(c):
     while w:
         try:
             assert (len(w) == 1)
-        except:
-            print c
+        except Exception:
+            print(c)
             raise KeyError
         w = w[0]
         if not c[v+w][1]: # no es backward
@@ -198,7 +198,12 @@ def caminos(n,f):
             actualizaNA(aux,c,f)
             c = caminoDFS(aux)
         aux = na(n,f)
-    result = map(ppcamino,result)
+    result = list(map(ppcamino, result))
     for i in result:
-        print i
+        print(i)
+    total = sum(f[k] for k in f if k[0] == "0")
+    print("Valor del flujo maximal :", total)
 
+
+if __name__ == "__main__":
+    caminos(c, f)

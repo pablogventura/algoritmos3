@@ -855,7 +855,7 @@ def hungaro(argmat):
     for x in range(TAM):
         costo += Matriz[x, col_que_matchea_la_fila[x]]
         matching[(chr(65+x) ,col_que_matchea_la_fila[x]+1 )] = MatrizOriginal[x, col_que_matchea_la_fila[x]]
-    print "Costo Total:%s" % costo
+    print("Costo Total:%s" % costo)
     return matching,Matriz
 
 

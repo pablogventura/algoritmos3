@@ -865,7 +865,7 @@ def main ():
     else:                #//aunque no sea verboso, puedo querer ver el match final
         #//por otro lado, puedo no querer verlo, si la matriz es por ejemplo 1000x1000.
         printf ("Listo. Quiere ver el Matching? (0= no, otro entero=si)")
-        verboso = int(raw_input(""))
+        verboso = int(input(""))
     for x in range(TAM):
         costo += Matriz[x, col_que_matchea_la_fila[x]]
         if (verboso):

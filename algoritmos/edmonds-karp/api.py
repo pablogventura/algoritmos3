@@ -16,20 +16,20 @@ class EstadoEK(object):
         try:
             verbosidad = int(verbosidad)
         except ValueError:
-            print "ERROR: La verbosidad debe ser un numero."
-            print "Se asume verbosidad 0"
+            print("ERROR: La verbosidad debe ser un numero.")
+            print("Se asume verbosidad 0")
             verbosidad = 0
 
-        if not verbosidad in verbosidades:
-            print "ERROR: Valor de verbosidad no válido."
-            print "Se asume verbosidad 0"
+        if verbosidad not in verbosidades:
+            print("ERROR: Valor de verbosidad no válido.")
+            print("Se asume verbosidad 0")
             verbosidad = 0
         self._cantCaminos = 0
         self._verbosidad = verbosidad
 
     def leer_un_lado(self):
         try:
-            entrada = raw_input("")
+            entrada = input("")
         except EOFError:
             return 0
 
@@ -71,16 +71,16 @@ class EstadoEK(object):
 
             if self._verbosidad in [1, 11, 101, 111]:
 
-                print ("Incremento en el camino aumentante " +
-                       str(self._cantCaminos) + ": " + str(caminoAumentante.flujo()))
+                print("Incremento en el camino aumentante " +
+                      str(self._cantCaminos) + ": " + str(caminoAumentante.flujo()))
 
             elif self._verbosidad in [2, 12, 102, 112]:
-                print "-"*80
-                print "BFS " + str(self._cantCaminos) + ":"
-                print self.bfs
-                
-                print "camino aumentante " + str(self._cantCaminos) + ":"
-                print caminoAumentante
+                print("-" * 80)
+                print("BFS " + str(self._cantCaminos) + ":")
+                print(self.bfs)
+
+                print("camino aumentante " + str(self._cantCaminos) + ":")
+                print(caminoAumentante)
 
             return 1 # porque se pudo aumentar
         else:
@@ -98,9 +98,9 @@ class EstadoEK(object):
                 return -1
 
             if self._verbosidad in [0, 1, 2, 10, 11, 12]:
-                print "No hay mas caminos aumentantes."
+                print("No hay mas caminos aumentantes.")
             elif self._verbosidad in [100, 101, 110, 111, 112]:
-                print "No hay mas caminos aumentantes."
+                print("No hay mas caminos aumentantes.")
                 strCorte = "S = {"
                 for elem in self.bfs.corteMinimal():
                     if elem == fuente:
@@ -108,19 +108,18 @@ class EstadoEK(object):
                     elif elem == resumidero:
                         strCorte += "t, "
                     else:
-                        strCorte += chr(elem) + ", "
+                        strCorte += (chr(elem) if 0 <= elem <= 0x10FFFF else str(elem)) + ", "
                 strCorte = strCorte[:-2]  # Borro el ultimo ", "
                 strCorte += "}"
-                print "Corte Minimal: " + strCorte
-                print "Capacidad: " + str(capCorteMinimal)
+                print("Corte Minimal: " + strCorte)
+                print("Capacidad: " + str(capCorteMinimal))
             return 0 # porque no se pudo aumentar
 
     def imprimir_flujo_maximal(self):
 
         if self._verbosidad in [10, 11, 12, 110, 111, 112]:
-            print "Flujo Maximal:"
-            print self._cap
-            pass
+            print("Flujo Maximal:")
+            print(self._cap)
 
-        print "Valor del flujo maximal : " + str(self.flujoMaximal)
+        print("Valor del flujo maximal : " + str(self.flujoMaximal))
 

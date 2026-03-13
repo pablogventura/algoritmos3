@@ -32,32 +32,32 @@ def rlf(grafo):
     """
     result = {}
     color = 1
-    print "color %s" % color
-    R = set(grafo.keys()) # Vertices no coloreados
-    print "R = %s" % R
-    while R: 
-        L = set(R);
+    print("color %s" % color)
+    R = set(grafo.keys())  # Vertices no coloreados
+    print("R = %s" % R)
+    while R:
+        L = set(R)
         iteracion = 0
-        print "L = %s" % L
+        print("L = %s" % L)
         while L:
-            print "    iteracion %s" % iteracion
-            
+            print("    iteracion %s" % iteracion)
+
             temp = {v: len(set(grafo[v]).intersection(R)) for v in L}
-            temp1 = filter(lambda x: temp[x] == max(temp.values()),temp)
-            v = ordena(temp1,grafo)[0]
-            
-            print "    tomo %s de L" % v
+            temp1 = list(filter(lambda x: temp[x] == max(temp.values()), temp))
+            v = ordena(temp1, grafo)[0]
+
+            print("    tomo %s de L" % v)
             #v = max(L,key=lambda v: len(set(grafo[v]).intersection(R)))
             result[v] = color
             R.discard(v)
             L = L - set(grafo[v] + [v])
-            print "    R = %s" % R
-            print "    L = %s" % L
+            print("    R = %s" % R)
+            print("    L = %s" % L)
             iteracion += 1
-            print "-------------"
-        print "termine con ese color"
+            print("-------------")
+        print("termine con ese color")
         color += 1
-        print "color %s" % color
+        print("color %s" % color)
     return result
 
 def greedy(grafo,orden):
@@ -78,11 +78,11 @@ def paso_greedy(grafo, coloreoparcial, vertice):
     for v in sorted(grafo.keys()):
         try:
             result[v] = coloreoparcial[v]
-        except:
+        except Exception:
             result[v] = None
     try:
         ultimocolor = max(coloreoparcial.values())
-    except:
+    except Exception:
         ultimocolor = 1
 
     coloresvecinos = []
@@ -104,7 +104,7 @@ def coloresvecinos(grafo,coloreo,v):
     for vecino in grafo[v]:
         try:
             result.add(coloreo[vecino])
-        except:
+        except Exception:
             pass
             #print "el vertice %s no estaba coloreado" % vecino
     return result
@@ -123,7 +123,7 @@ def v_coloresvecinos(grafo,coloreo):
     for v in coloreo.keys():
         if v in result.keys():
             del result[v]
-    return filter(lambda x: result[x] == max(result.values()),result.keys())
+    return list(filter(lambda x: result[x] == max(result.values()), result.keys()))
 
 def dsatur(grafo):
     result = {}
@@ -135,7 +135,7 @@ def dsatur(grafo):
         m = d5[0]
         result[m] = paso_greedy(grafo, result, m)
         orden.append(m)
-    print orden
+    print(orden)
     return result
 
 def subgrafo(grafo, vertices):
@@ -156,9 +156,8 @@ def wpmod(grafo):
 
         result[m] = paso_greedy(grafo, result, m)
         orden.append(m)
-    print orden
+    print(orden)
     return result
-    
 
 
 def _vgrado(grado, grafo):
@@ -180,7 +179,7 @@ def ordena(lista,grafo):
     grado = max([len(grafo[v]) for v in grafo])
     for i in range(grado+1,-1,-1):
         result += _vgrado(i,grafo)
-    return filter(lambda x: x in lista, result)
+    return list(filter(lambda x: x in lista, result))
 
     
     

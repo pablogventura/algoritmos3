@@ -25,7 +25,7 @@ class BFS(object):
                                         self._cap.capacidadActual(fuente,
                                                                   vecino),
                                         False))
-        iterador = self.bfs.keys() # una lista para poder ir iterando
+        iterador = list(self.bfs.keys())  # una lista para poder ir iterando
         iterador.sort()
         for key in iterador:
             elem = self.bfs[key]

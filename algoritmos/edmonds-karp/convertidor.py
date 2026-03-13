@@ -18,16 +18,19 @@ def reemplazar(v):
         return str(ord(v))
 
 while seguir:
-    entrada = raw_input("")
+    try:
+        entrada = input("")
+    except EOFError:
+        break
 
-    parseo = re.match("^(?P<x>[a-zA-Z])(?P<y>[a-zA-Z])(?P<cap>[0-9]+)$",
-                      entrada)
+    parseo = re.match(r"^(?P<x>[a-zA-Z])(?P<y>[a-zA-Z])(?P<cap>[0-9]+)$",
+                     entrada)
     if parseo is not None:
         x = parseo.group("x")
         y = parseo.group("y")
         cap = int(parseo.group("cap"))
 
-        print reemplazar(x) + " " + reemplazar(y) + " " + str(cap)
+        print(reemplazar(x) + " " + reemplazar(y) + " " + str(cap))
 
     else:
         seguir = False

@@ -305,16 +305,16 @@ class Wave(object):
     def wave(self):
         na = 1
         while self.t in set([x[0] for x in self.naux.keys()] + [x[1] for x in self.naux.keys()]):
-            print "-" *80
-            print "Flujo bloqueante sobre network auxiliar %s" % na
+            print("-" *80)
+            print("Flujo bloqueante sobre network auxiliar %s" % na)
             fb = self.flujo_bloqueante()
-            print "\ts = -%s\n\tt =  %s" % self.io(self.g,self.naux)
+            print("\ts = -%s\n\tt =  %s" % self.io(self.g,self.naux))
             self.actualizar_flujo(fb)
             self.reset()
             na+=1
-        print "*" * 80
-        print "Flujo final:"
-        print "\ts = -%s\n\tt =  %s" % self.io(self.nwg,self.nw)
+        print("*" * 80)
+        print("Flujo final:")
+        print("\ts = -%s\n\tt =  %s" % self.io(self.nwg,self.nw))
 
         return self.nwg
         
@@ -390,22 +390,22 @@ class Wave(object):
 
         self.N.discard(x)
     
-print "Ejercicio 1"    
+print("Ejercicio 1"    )
 d=Wave(n1)
 d.wave()
-print ""
-print "Ejercicio 2"    
+print("")
+print("Ejercicio 2"    )
 d=Wave(n2)
 d.wave()
-print ""
-print "Ejercicio 3"    
+print("")
+print("Ejercicio 3"    )
 d=Wave(n3)
 d.wave()
-print ""
-print "Ejercicio 4"    
+print("")
+print("Ejercicio 4"    )
 d=Wave(n4)
 d.wave()
-print ""
+print("")
     
     
     

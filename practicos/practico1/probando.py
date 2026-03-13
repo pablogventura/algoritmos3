@@ -41,7 +41,7 @@ def k(vertices):
     Genera un grafo completo de una determinada cantidad de vertices.
     """
     result = {}
-    todos = map(chr,range(ord('a'), ord('a') + vertices))
+    todos = list(map(chr, range(ord('a'), ord('a') + vertices)))
     for c in todos:
         result[c] = todos
     return result
@@ -51,7 +51,7 @@ def c(vertices):
     Genera un grafo ciclo de una determinada cantidad de vertices.
     """
     result = {}
-    todos = map(chr,range(ord('a'), ord('a') + vertices))
+    todos = list(map(chr, range(ord('a'), ord('a') + vertices)))
     for i in range(ord('a')+1, ord('a') + vertices - 1):
         result[chr(i)]=[chr(i-1),chr(i+1)]
     result[chr(ord('a') + vertices - 1)]=['a', chr(ord('a') + vertices - 2)]
@@ -66,7 +66,7 @@ def pp(g):
     """
     for v in g:
         for w in g[v]:
-            print 'edge "%s" -- "%s"' % (v,w)
+            print('edge "%s" -- "%s"' % (v, w))
 
 
 
@@ -321,7 +321,7 @@ def grafo10pp(n):
         l = []
         for j in range(n):
             l.append((i,j))
-        print l
+        print(l)
     
 def coloreo10(grafo,n):
     result = {}
@@ -336,7 +336,7 @@ def pruebomuchoal10(maximo):
     for n in range(maximo):
         g = grafo10(n)
         cg = coloreo10(g,n)
-        print (n%6==1 or n%6==5,esPropio(g,cg))
+        print((n%6==1 or n%6==5,esPropio(g,cg)))
 
 
     

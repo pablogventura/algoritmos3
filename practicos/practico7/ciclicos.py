@@ -78,52 +78,52 @@ def codifica2(g,n,w):
     return temp
 
 def ejercicio1(g,n,w1,w2):
-    print "-" * 80
-    print "g=%s" % g
-    print "n=%s" % n
-    print ""
-    print "k=%s" % dimension(g,n)
-    print ""
-    print "Matriz Generadora"
-    print matrizGeneradora(g,n)
-    print ""
-    print "Matriz de Chequeo"
-    print aChequeo(matrizGeneradora(g,n))
-    print ""
-    print "(x**n+1)/g(x)=%s" % restoPol(g,x**n+1)
-    print ""
-    print "Codificacion metodo 1, primer palabra"
-    print "Original: %s - Codificada: %s" % (w1,codifica1(g,n,w1)/1)
-    print "Codificacion metodo 1, segunda palabra"
-    print "Original: %s - Codificada: %s" % (w2,codifica1(g,n,w2)/1)
-    print "Codificacion metodo 2, primer palabra"
-    print "Original: %s - Codificada: %s" % (w1,codifica2(g,n,w1)/1)
-    print "Codificacion metodo 2, segunda palabra"
-    print "Original: %s - Codificada: %s" % (w2,codifica2(g,n,w2)/1)
+    print("-" * 80)
+    print("g=%s" % g)
+    print("n=%s" % n)
+    print("")
+    print("k=%s" % dimension(g,n))
+    print("")
+    print("Matriz Generadora")
+    print(matrizGeneradora(g,n))
+    print("")
+    print("Matriz de Chequeo")
+    print(aChequeo(matrizGeneradora(g,n)))
+    print("")
+    print("(x**n+1)/g(x)=%s" % restoPol(g,x**n+1))
+    print("")
+    print("Codificacion metodo 1, primer palabra")
+    print("Original: %s - Codificada: %s" % (w1,codifica1(g,n,w1)/1))
+    print("Codificacion metodo 1, segunda palabra")
+    print("Original: %s - Codificada: %s" % (w2,codifica1(g,n,w2)/1))
+    print("Codificacion metodo 2, primer palabra")
+    print("Original: %s - Codificada: %s" % (w1,codifica2(g,n,w1)/1))
+    print("Codificacion metodo 2, segunda palabra")
+    print("Original: %s - Codificada: %s" % (w2,codifica2(g,n,w2)/1))
 
 def resolvere1():
     w1=x**3
     w2=x**2+x**3
-    print ""
-    print "Ej 1a"
+    print("")
+    print("Ej 1a")
     ejercicio1(ga,na,w1,w2)
-    print ""
-    print "Ej 1b"
+    print("")
+    print("Ej 1b")
     ejercicio1(gb,nb,w1,w2)
-    print ""
-    print "Ej 1c"
+    print("")
+    print("Ej 1c")
     ejercicio1(gc,nc,w1,w2)
-    print ""
-    print "Ej 1d"
+    print("")
+    print("Ej 1d")
     ejercicio1(gd,nd,w1,w2)
-    print ""
-    print "Ej 1e"
+    print("")
+    print("Ej 1e")
     ejercicio1(ge,ne,w1,w2)
-    print ""
-    print "Ej 1f"
+    print("")
+    print("Ej 1f")
     ejercicio1(gf,nf,w1,w2)
-    print ""
-    print "Ej 1g"
+    print("")
+    print("Ej 1g")
     ejercicio1(gh,nh,w1,w2)
 
 
@@ -139,15 +139,15 @@ def strPol(s):
 
 def errortrap(g,n,t,w):
 
-    print "Llego w(x) = %s" % w
+    print("Llego w(x) = %s" % w)
     s=[]
     so=[]
     for i in range(0,n):
         so.append(restoPol(x**i*w,g))
-    print "\nSs = "
+    print("\nSs = ")
     for si in so:
-        print z2Pol(si)
-    print ""
+        print(z2Pol(si))
+    print("")
     so = map(lambda arg:corrigeCoef(arg,n),so)
     s = map(lambda arg:arg.count(codigos.z2(1)),so)
     huboerror = False
@@ -158,37 +158,37 @@ def errortrap(g,n,t,w):
             break
     if huboerror:
         if 0 in s:
-            print "no hubo error!"
+            print("no hubo error!")
             v = w
-            print "V(x) = W(x)"
+            print("V(x) = W(x)")
             
             H = aChequeo(matrizGeneradora(g,n))
             chek = (H*codigos.convertir(polStr(w,n)))
             assert all(map(lambda _:_.valor==0,chek.transpose().tolist()[0]))
-            print "Chequeo bien! H*v'===0"
+            print("Chequeo bien! H*v'===0")
             return v
-        print "               i = %s" % i
+        print("               i = %s" % i)
         si = sympy.Poly(reversed(so[i]),x)/1
-        print "          S_%s(x) = %s" % (i,si)
+        print("          S_%s(x) = %s" % (i,si))
         e = restoPol(x**(n-i)*si,1+x**n)
-        print "            E(x) = %s" % z2Pol(e)
+        print("            E(x) = %s" % z2Pol(e))
         v = w + e
-        print "V(x) = W(x)+E(x) = %s" % z2Pol(v)
+        print("V(x) = W(x)+E(x) = %s" % z2Pol(v))
         
         H = aChequeo(matrizGeneradora(g,n))
         chek = (H*codigos.convertir(polStr(v,n)))
         assert all(map(lambda _:_.valor==0,chek.transpose().tolist()[0]))
-        print "Chequeo bien! H*v'==0"
+        print("Chequeo bien! H*v'==0")
         return v
     else:
-        print "Hubo error al mandar, pero no corregible!"
+        print("Hubo error al mandar, pero no corregible!")
         v = w
-        print "V(x) = W(x)"
+        print("V(x) = W(x)")
         
         H = aChequeo(matrizGeneradora(g,n))
         chek = (H*codigos.convertir(polStr(w,n)))
         assert not all(map(lambda _:_.valor==0,chek.transpose().tolist()[0]))
-        print "Chequeo bien! H*v'!=0"
+        print("Chequeo bien! H*v'!=0")
         return v
 
     
@@ -202,16 +202,16 @@ def resolvere2():
     wd = "001000000110000"
     we = "110001101000101"
     wf = "001001000100110"
-    print "generador = %s" % g
-    print "n = %s" % n
-    print "t = %s" % t
-    print ""
+    print("generador = %s" % g)
+    print("n = %s" % n)
+    print("t = %s" % t)
+    print("")
     for w in [wa,wb,wc,wd,we,wf]:
-        print "-" * 80
-        print "Llego %s" % w
+        print("-" * 80)
+        print("Llego %s" % w)
         v = errortrap(g,n,t,strPol(w))
-        print "Quedo %s" % polStr(v,n)
-        print "-" * 80
+        print("Quedo %s" % polStr(v,n))
+        print("-" * 80)
     
     
     

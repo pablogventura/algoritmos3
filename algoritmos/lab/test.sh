@@ -9,8 +9,8 @@ function main {
     echo "·~-~·~-~·~-~·~-~·~-~·-~·-~·   ALGORITMO DE EDMONDS-KARP  ·~-~·~-~·~-~·~-~·~-~·~·~-~·~"
     echo ""
     for example in examples/debe_dar*; do
-      OUTPUT=$(./main < $example | grep 'maximal')
-      FLOWVALUE=$(echo "$example" | cut -d"_" -f3)
+      OUTPUT=$(./main < "$example" 2>/dev/null | grep 'maximal' | tail -1)
+      FLOWVALUE=$(echo "$example" | sed -n 's/.*debe_dar_\([0-9]*\).*/\1/p')
       EXPECTED="Valor del flujo maximal: $FLOWVALUE"
       if [ "$OUTPUT" != "$EXPECTED" ]; then
         echo -e "\e[01;31mERROR!\e[0m"
