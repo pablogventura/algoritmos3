@@ -1,0 +1,52 @@
+# Sistema operativo
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Editores e IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# C / C++ (compilados)
+*.o
+*.obj
+*.out
+*.exe
+a.out
+*.a
+*.so
+*.dylib
+
+# Archivos temporales y copias
+*.bak
+*.tmp
+*.temp
+*.log
+*.cache
+
+# Archivos grandes / multimedia (opcional: descomenta si no querés versionarlos)
+# *.mp4
+# *.pdf
+
+# Subrepositorios (si disc2 u otros son clones y no querés trackear su .git)
+# */\.git/

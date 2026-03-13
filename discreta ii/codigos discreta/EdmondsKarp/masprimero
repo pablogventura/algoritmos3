@@ -1,0 +1,35 @@
+--------------------------------------------------------------------------------
+BFS 1:
+(,a    ,z    ,b    ,c    ,t    
+ ,s    ,s    ,a    ,a    ,b    
+ ,0002 ,0008 ,0002 ,0002 ,0002 
+camino aumentante 1:
+s,a,b,t: 2
+--------------------------------------------------------------------------------
+BFS 2:
+(,z    ,b    ,t    
+ ,s    ,z    ,b    
+ ,0008 ,0008 ,0002 
+camino aumentante 2:
+s,z,b,t: 2
+--------------------------------------------------------------------------------
+BFS 3:
+(,z    ,b    ,a    ,c    ,d    ,t    
+ ,s    ,z    ,b    ,a    ,c    ,d    
+ ,0006 ,0006 ,0006 ,0006 ,0006 ,0006 
+camino aumentante 3:
+s,z,b,a,c,d,t: 6
+No hay mas caminos aumentantes.
+Corte Minimal: S = {s}
+Capacidad: 10
+Flujo Maximal:
+Lado s,a: 2
+Lado s,z: 8
+Lado a,b: 2
+Lado a,c: 6
+Lado b,t: 4
+Lado b,a: 6
+Lado c,d: 6
+Lado d,t: 6
+Lado z,b: 8
+Valor del flujo maximal : 10

@@ -1,0 +1,24 @@
+Valor del flujo maximal : 23327233
+
+real	0m0.953s
+user	0m0.948s
+sys	0m0.004s
+pablo@ludwig:~/Escritorio/Discreta$ 
+
+Valor del flujo maximal : 23327233
+
+real	0m0.475s
+user	0m0.476s
+sys	0m0.000s
+
+---------------------------------------------
+
+camino aumentante 1783:
+s,7,474,t: 10
+
+KeyboardInterrupt
+
+real	220m26.254s
+user	219m48.056s
+sys	0m0.032s
+

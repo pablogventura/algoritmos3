@@ -1,0 +1,16 @@
+pablo@ludwig:~/Escritorio/Discreta$ time python main.py < ./ejemplos/ejemploceballos_bien.in 
+^CTraceback (most recent call last):
+  File "main.py", line 33, in <module>
+    main()
+  File "main.py", line 25, in main
+    result = ed.aumentar_flujo()
+  File "/home/pablo/Escritorio/Discreta/api.py", line 77, in aumentar_flujo
+    if self._estaEnBfs(vecino) == False:
+  File "/home/pablo/Escritorio/Discreta/api.py", line 233, in _estaEnBfs
+    return True
+KeyboardInterrupt
+
+real	710m14.729s
+user	708m4.643s
+sys	0m0.032s
+
