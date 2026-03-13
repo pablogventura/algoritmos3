@@ -134,12 +134,16 @@ class MatrizCap(object):
                 x = "s"
             elif x == resumidero:
                 x = "t"
+            else:
+                x = chr(x)
+                
             if y == fuente:
                 y = "s"
             elif y == resumidero:
                 y = "t"
-
-            cadena += "Lado " + str(x) + "," + str(y) + ": "
+            else:
+                y = chr(y)
+            cadena += "Lado " + x + "," + y + ": "
             cadena += flujo + "\n"
 
         return cadena[:-1]

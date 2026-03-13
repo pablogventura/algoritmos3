@@ -20,7 +20,7 @@ def reemplazar(v):
 while seguir:
     entrada = raw_input("")
 
-    parseo = re.match("^(?P<x>[a-zA-Z])(?P<y>[a-zA-Z]) (?P<cap>[0-9]+)$",
+    parseo = re.match("^(?P<x>[a-zA-Z])(?P<y>[a-zA-Z])(?P<cap>[0-9]+)$",
                       entrada)
     if parseo is not None:
         x = parseo.group("x")

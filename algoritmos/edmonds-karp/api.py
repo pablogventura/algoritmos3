@@ -75,6 +75,10 @@ class EstadoEK(object):
                        str(self._cantCaminos) + ": " + str(caminoAumentante.flujo()))
 
             elif self._verbosidad in [2, 12, 102, 112]:
+                print "-"*80
+                print "BFS " + str(self._cantCaminos) + ":"
+                print self.bfs
+                
                 print "camino aumentante " + str(self._cantCaminos) + ":"
                 print caminoAumentante
 
@@ -104,7 +108,7 @@ class EstadoEK(object):
                     elif elem == resumidero:
                         strCorte += "t, "
                     else:
-                        strCorte += str(elem) + ", "
+                        strCorte += chr(elem) + ", "
                 strCorte = strCorte[:-2]  # Borro el ultimo ", "
                 strCorte += "}"
                 print "Corte Minimal: " + strCorte
@@ -116,6 +120,7 @@ class EstadoEK(object):
         if self._verbosidad in [10, 11, 12, 110, 111, 112]:
             print "Flujo Maximal:"
             print self._cap
+            pass
 
         print "Valor del flujo maximal : " + str(self.flujoMaximal)
 

@@ -19,6 +19,7 @@ Desktop.ini
 # Python
 __pycache__/
 *.py[cod]
+*.pyo
 *$py.class
 *.so
 .Python
@@ -50,6 +51,3 @@ a.out
 # Archivos grandes / multimedia (opcional: descomenta si no querés versionarlos)
 # *.mp4
 # *.pdf
-
-# Subrepositorios (si disc2 u otros son clones y no querés trackear su .git)
-# */\.git/

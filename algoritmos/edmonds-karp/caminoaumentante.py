@@ -54,6 +54,8 @@ class CaminoAumentante:
                 vertice = "s"
             elif vertice == resumidero:
                 vertice = "t"
+            else:
+                vertice = chr(vertice)
 
             if esBackward:
                 strCamino += "<" + str(vertice)

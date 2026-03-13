@@ -1,0 +1,347 @@
+Laboratorio de Matemática Discreta II - Algoritmo de Edmonds-Karp
+
+* Miembros
+- Mariano Jesús Mateuci - mjmateuci@gmail.com
+- Nicolás Daniel Gómez - nicolasdanielgomez@gmail.com
+- Francisco Bazán - franbazan26@gmail.com
+- Alejandro José Naser Pastoriza - alejnaser@gmail.com
+* Introducción
+El presente documento describe el proceso de diseño e implementación
+de un programa, en C, que abstrae un network, implementa el
+algoritmo de Edmonds-Karp y calcula el valor de un flujo maximal y un
+corte minimal sobre él. Se plantea un challenge interesante al deber
+optimizar la utilización de memoria y refinar el tiempo de ejecución
+del programa, partiendo del pseudocódigo de Edmonds-Karp y determinando
+la manera y las estructuras de datos más apropiadas
+para lograr la mayor eficiencia posible.
+* Diseño
+Parafraseando lo dicho en la introducción, deseamos "abstraer un
+network y calcular un flujo maximal sobre él". Veamos que implica
+esto, sabemos que un network es un grafo dirigido con capacidades en
+sus lados. Implicitamente, hay definidos varios conceptos subyacentes.
+Grafo, vértice, lado o arista, flujo, etc. De estos conceptos debemos
+determinar cuales tienen un comportamiento propio (e información que
+deseen hacer perdurar en el tiempo) tal que valga la pena ser una
+estructura de datos. Por ejemplo, pensemos en forward y backward
+search. En ese punto de la ejecución debemos explorar cada vecino
+forward del pivote, para cada uno de ellos determinar si el flujo es
+mayor que la capacidad y si no está en el corte. Por lo tanto, tiene
+sentido que cada vértice tenga conocimiento de quiénes son sus
+vecinos forward y backward y operar sobre ellos, este es un
+comportamiento inherente a los vértices, por lo tanto merecen ser un
+tipo abstracto de dato. Lo mismo ocurre para las aristas, cada una
+debe tener conocimiento de su capacidad y el flujo que pasa por ella,
+pues la lógica esta no corresponde a ningún otro lugar que no sea la
+arista, lo mismo ocurre para un network, etc. Se explicará más a
+medida que se describa cada módulo.
+El mayor problema al implementar Edmonds-Karp es determinar un
+mecanismo para alojar la información correspondiente a cada paso del
+algoritmo de Edmonds-Karp, es decir, el potencial corte, la lista de
+ancestros, la lista de indicadores de si se llegó a un vértice a
+través de una arista forward o backward y la lista de flujos
+acumulados hasta cada vértice. Si pensamos en el pseudocódigo, esto
+se hacía indexando estas listas con el nombre del vértice, por
+ejemplo decíamos que q era el ancestro de p de la siguiente manera, 
+#+BEGIN_SRC C
+q = a[p];  
+#+END_SRC
+Nótese que estamos indexando el array de ancestros a través del mismo
+vértice. Esto no lo podemos hacer en C directamente, pero podríamos
+emular un mecanismo de hashing para implementar esto. La primera
+apreciación sugiere utilizar las Hash Tables de la Glib. Hay razones
+por la cual no hicimos esto, una fue definir inteligentemente la
+estructura de datos de manera tal que pueda escribir y leer estos
+arreglos en tiempo constante sin hacer uso de ninguna librería
+especial, pues según nuestra experiencia, compilar librerías de la
+Glib requieren algún paso adicional, o instalar algún paquete de
+linux, algo que quisimos evitar, por lo tanto nuestro laboratorio
+está escrito completamente from scratch.
+Hay un hecho que fue particularmente sorprendente y fue el mecanismo
+para determinar si un vértice ya se encuentra en el corte que estamos
+construyendo en cada paso de Edmonds-Karp. En principio teníamos una
+función que recorría el corte comparando cada vértice en el mismo con
+el pivote. De este modo, ejecutando el programa con un network de 5000
+vértices en una computadora
+con microprocesador Intel i5 Ivy Bridge, tomaba un tiempo de 33
+segundos. Luego agregamos un campo boolean al vértice que, cuando se
+introduce al corte se lo setea en true, y luego comparamos
+directamente contra esta bandera, esto hizo que el programa corriera
+en 0,6 segundos, no nos hubiesemos imaginado que sería tan grande el
+impacto.
+El resto de los detalles se describen a continuación.
+* Módulos
+** Api
+Este módulo contiene las funciones que la especificación exige. 
+Los detalles de cáda función se expresan en API.h. Nótese que estamos
+utilizando este módulo como un wrapper de un módulo propio llamado
+network. Hicimos esto principalemente para mantener la uniformidad
+idiomática, pues todo el commenting y el naming utilizado es en
+inglés. Resultaba relativamente incómodo tener estructuras llamadas
+DragonP, funciones llamadas LlenarDragon, etc. Luego desplazamos esta
+lógica hacia el módulo network de manera tal que el código sea mucho
+mas expresivo y autodescriptivo. Otra razón es que si se decidiera
+modificar la especificación de la API, esto genera que nuestro código
+sea mucho mas escalable, al tener funciones de mas alto nivel podemos
+discriminar las responsabilidades de mejor manera.
+** Edge
+Este módulo implementa funcionalidad inherente a las aristas.
+Como dijimos antes, las aristas tienen un comportamiento propio que
+hace que merezca ser un tipo abstracto de datos. Hemos codificado el
+problema de manera tal que se cumpla el Single Responsability
+Principle, si bien este es un principio utilizado en diseño orientado
+a objetos, creemos que aporta a la legibilidad, mantenibilidad y
+escalabilidad del código. Por lo tanto, hemos hecho una interfaz que
+nos ayuda a olvidarnos de los detalles de la implementación de una
+arista y poder interactuar con las mismas de un modo mas ameno. Hay
+funciones para crear, destruir, retornar el valor de los campos
+(flujo, capacidad, vértices) y mecanismos para incrementar y
+decrementar el valor del flujo en las aristas.
+** Helper
+Este módulo podría no existir, contiene funciones que podrían haber
+sido declaradas como estáticas en network.c. Son funciones
+importantes en la implementación de Edmonds-Karp pero que no
+necesitan ser públicas, es decir, parte de la interfaz, sino que son
+para cálculos internos de otras funciones. Se incluyen en el
+modulo helper de manera que se pueda favorecer la modularizacion y
+lectura del codigo.
+Se proveen dos bunch de funcionalidades principales. Una es una
+agradable abstracción de un network con la funcionalidad pertinente
+(que se apreciará cuando describamos el TAD mencionado) y la otra es
+funcionalidad propia del algoritmo, esto es, forward search, backward
+search, 
+#+BEGIN_SRC C
+add_vertex_to_network();  
+#+END_SRC
+es un helper para ir agregando los
+nodos parseados a la estructura de datos principal (network) e
+#+BEGIN_SRC C
+increase_network_max_flow();  
+#+END_SRC
+sirve para aumentar el valor del flujo en
+el network, por último un pretty printer para el agumenting path.
+** Info
+Se provee funcionalidad para crear una estructura de datos info (que
+se explicará mas adelante), destruirla, retornar los arreglos de
+corte, ancestros, arreglo de indicadores de forward o backward edges,
+el arreglo de los valores de flujo acumulado hasta cada vértice, etc.
+Por otro lado hay funcionalidad para la construcción y destrucción
+del camino aumentante, para el manejo y alteración de la cadena
+representante.
+Como se puede apreciar, esta estructura es la que aloja toda la
+información inherente a cada paso del algoritmo Edmonds-Karp.
+** Main
+#+BEGIN_SRC C
+#include "API.h"
+
+int main (int argc, char* argv[]) {
+  DragonP N = NULL;
+  N = NuevoDragon ();
+  LlenarDragon (N);
+  while (ECAML (N)) {
+    AumentarFlujoYtambienImprimirCamino (N);
+    ImprimirValorFlujo (N);
+    /* imprimirFlujo (N); */
+  }
+  ImprimirValorFlujo (N);
+  /* imprimirFlujo (N); */
+  ImprimirCorte (N);
+  DestruirDragon (N);
+  return 0;
+}
+#+END_SRC
+Este es un simple main que nos sirve para probar nuestra interfaz,
+nótese que tiene una sola libreria incluída y es API. El código es
+autodescriptivo lo suficiente. Se crea un nuevo network, se lo popula
+desde STDIN, y luego, mientras se pueda encontrar un camino
+aumentante se incrementa el valor del flujo y se imprime el camino
+aumentante a través del cual se aumentó el flujo. Imprimir flujo está
+comentada porque ensucia demasiado el STDOUT, puesto que imprime el
+flujo en cada arista del network, que a veces es muy grande. Se
+imprime el valor del flujo maximal, el corte y se destruye el network.
+Sabemos que no es necesario entregar un main pero lo hacemos porque
+hicimos algo extra que tal vez valga la pena notar. Lo comentamos en
+el apartado Extras.
+** Network
+En este punto no es necesario añadir más comentarios, puesto que esta
+es la verdadera implementación de las funciones wrappeadas por API la
+descripción de estas funciones corresponde a las citadas en el
+archivo API.h.
+Más allá de este informe el código se encuentra muy comentado y
+esperamos que los mismos puedan ser muy informativos y claros.
+** Queue
+Implementa la funcionalidad básica de una cola, se utiliza para poder
+crear un BFS sobre el grafo dirigido en cuestión. Nótese como el
+cuerpo principal del algoritmo Edmonds-Karp extrae la cabeza de la
+cola a través de la cual va generando el árbol, y luego de añadir un
+vértice al potencial corte lo encola para poder explorar sus vecinos
+a posteriori.
+** Structures
+Contiene las declaraciones de todas las estructuras necesarias. Cada
+una se encuentra descripta extensivamente en el archivo structures.h.
+Hay una razón por la cual todas las estructuras se encuentran
+definidas en un sólo archivo, y es porque se referencian mutuamente,
+por ejemplo, un vértice contiene aristas (sus aristas forward y
+backward) y una arista naturalmente contiene vértices, por lo que, la
+declaración de cada estructura debe ser visible para la otra, puesto
+que este fue un patrón que se repetía constantemente, decidimos crear
+un archivo con todas las estructuras, además de poder acceder a ellas
+ágilmente desde cualquier scope.
+** Vertex
+Provee una interfaz para manipular vértices. Podemos crear, destruir,
+retornar la etiqueta de un vértice, un comparador, añadir aristas
+forward o backwards a la estructura de datos, retornar las listas de
+aristas y sus longitudes, el por qué de la existencia de estos campos
+se describirá cuando hablemos del TAD propiamente dicho.
+Implementa funciones útiles para hacer uso de los vértices.
+* Tipos Abstractos de Datos
+Pasemos a describir el por qué de la existencia de cada campo y que significa.
+** Edge
+- x: Referencia el primer vértice de la arista.
+- y: Referencia el segundo vértice de la arista.
+- capacity: Valor de la capacidad de la arista.
+- flow: Flujo que pasa por la arista.
+El comportamiento principal de una arista en lo que refiere al
+algoritmo de Edmonds-Karp es analizar la diferencia entre capacidad y
+flujo, por lo tanto una arista debe tener acceso a esta información.
+El motivo para tener los vértices que corresponden a una arista es
+que, cada arista es conocida por sus vértices, es decir, cuando
+veamos el tipo abstracto de dato vértice, veremos que tiene la lista
+de aristas forward y backward, en el caso de que una arista sea una
+arista forward en un vértice sabremos que el primer vértice es el
+mismo, pero para conocer el otro debemos tener un mecanismo para
+extraer los labels de los vértices en una arista, para el caso
+backward es análogo. También es útil conocer la capacidad y el flujo
+para mantener oculta dentro del módulo correspondiente la lógica de
+capacidad versus flujo, aunque esto no lo hicimos por una cuestión de
+tiempo, es decir, sería bueno tener una función 
+#+BEGIN_SRC C
+bool edge_can_be_in_augmenting_path(edge edge) {
+  assert (edge != NULL);
+  return edge -> flow < edge -> capacity;
+}
+#+END_SRC
+y utilizarla para no violar las abstracciones, pero hay varios de
+estos detalles que no hemos pulido.
+** Vertex
+- label: Notemos que los vértices se representan por un número en el
+  input, puesto que acá son estructuras de datos mantenemos
+  esta nomenclatura utilizando un label para el vértice, que será
+  dicho número.
+- forward\_edge: Esta es la lista de aristas forward pertenecientes al
+  vértice, es decir, la lista de aristas cuyo primer vértice es éste.
+  Tener este campo nos sirve para hacer la búsqueda forward, puesto
+  que debemos recorrer la lista de aristas cuyo primer vértice es el
+  pivote, nada mejor que ya tenerla disponible en el vértice. Puesto
+  que vamos a iterar sobre este arreglo necesitamos conocer su
+  longitud para poder utilizar una instrucción for, por eso la
+  existencia del campo forward\_edges\_count. Análogo para las
+  backward edges. 
+- tag: Anteriormente mencionamos el problema de guardar en arreglos la
+  información correspondiente a cada paso del algoritmo Edmonds-Karp,
+  dijimos que no podemos utilizar el mismo vértice como índice. La
+  solución propuesta tiene que ver con este campo. Nótese que
+  Edmonds-Karp añadirá a lo sumo todos los vértices menos el
+  resumidero a un corte, luego podemos alocar memoria para el arreglo
+  en el que alojaremos el corte, los ancestros, etc, de tamaño igual
+  a la cantidad de vértices en el network. La primera posibilidad es
+  utilizar el label del vértice como índice puesto que es único, pero
+  esto genera un desperdicio de memoria importante, por ejemplo, si
+  tenemos un network cuyos vértices son 0, 1, 1000, y queremos que el
+  nombre del vértice se pueda usar como índice debería alocar un
+  arreglo de tamaño 1001, desperdiciando memoria pues sólo
+  utilizaríamos a lo sumo dos celdas del mismo, en consecuencia, cada
+  vértice recibe un valor único entre 0 y n-1 (donde n es la cantidad
+  de vértices del network) y cada vez que se desee alojar información
+  sobre este vértice (su ancestro, su flujo acumulado, etc) lo
+  haremos en la estructura info guardando y leyendo siempre en la
+  posición indicada por el tag de éste vértice, esta simple
+  modificación nos libró de utilizar la Glib y la necesidad de hacer
+  hashing en este laboratorio. Este número se setea a medida que los
+  vértices van ingresando al network.
+- in\_the\_cut: Esta bandera indica si el vértice ya ha sido utilizado
+  en el corte que se está calculando en el momento. Esto se utiliza
+  para hacer la forward y la backward search, nótese que podemos saber
+  en tiempo constante si un vértice ya ha sido utilizado, lo cual,
+  como mencionamos anteriormente, aumentó la velocidad de nuestro
+  programa 34 veces aproximadamente.
+** Node
+Un nodo contiene:
+- vertex: Referencia al vertice.
+- next\_vertex: Referencia al siguiente nodo.
+De este TAD no hay mucho para decir, simplemente la Queue se
+implementa como una lista enlazada de nodos, que fueron implementados
+de la forma más básica y ya conocida.
+** Queue
+Implementación de Cola, contiene los campos:
+- first: Es una referencia al primer nodo de la cola.
+- last: Es una referencia al último nodo de la cola.
+- size: Es el tamaño de la cola.
+El motivo para tener punteros al último y primer elemento es para
+poder hacer todas las funciones de colas que necesitamos en tiempo constante.
+** Info
+Esta es uno de los TADS más importantes, por todo lo que mencionamos anteriormente:
+- cut: Es un arreglo de vértices, los cuales componen el potencial
+  corte que se está generando en cada paso del algoritmo Edmonds-Karp.
+- ancestors: Es un arreglo de vértices que satisfacen, el vértice en
+  la posición i es el ancestro del vértice cuyo tag es i.
+- forward\_edge: Es un arreglo de booleanos que satisfacen, el valor
+  de verdad en la posición i indica si se llegó al vértice con tag i a
+  través de una arista forward o backward.
+- accumulated\_flow: Es una lista de números que satisfacen, el número
+  en la posición i es el valor del flujo acumulado hasta llegar al
+  vértice cuya etiqueta es i.
+- vértices\_count: Cantidad de vértices en el potencial corte.
+- max\_flow\_value: Valor del flujo calculado en la búsqueda ECAML.
+- augmenting\_path: Almacena el camino aumentante que se está computando.
+- is\_maximal\_flow: Indica si el flujo en el campo max\_flow\_value es maximal.
+- last\_ecaml\_reached\_sink: Indica si el último camino aumentante llega al resumidero.
+- last\_ecaml\_result\_used: Indica si el último camino aumentante ya
+  ha sido utilizado para incrementar el valor del flujo en el network.
+- augmenting\_path\_number: Lleva la cuenta de los caminos aumentantes
+  que han sido calculados.
+** DragonP
+Puntero a la abstracción de network bien descripta en structures.h:
+- vertices: Array de vértices en el network.
+- vertices\_count: Contador de vértices en el network.
+- edges: Array de lados en el network.
+- edges\_count: Contador de lados en el network.
+- source: Referencia a la fuente.
+- sink: Referencia al resumidero.
+- info: Referencia a una estructura de datos info para alojar la info
+  pertinente al algoritmo en cuestión.
+* Extras
+- Makefile: Hemos utilizado una buena cantidad de flags molestos para
+  el compilador que nos aseguren haber cumplido con estándares de
+  coding style, correctitud, etc. Nótese en particular la posibilidad
+  de hacer make valgrind, hemos hecho esto porque hemos asegurado que
+  nuestro programa se encuentra libre de memory leaks y errores. Por
+  defecto prueba contra el network de ejemplo de 5000 vértices,
+  asegurandonos la correctitud en términos de memoria utilizada.
+- Examples: Incluímos una carpeta con networks de ejemplo contra los
+  cuales hemos testeado nuestro código.
+- test.sh: Este script es una pequeña batería de tests para nuestro
+  código. Lo que hace es compilar el proyecto, testearlo y luego
+  limpiar todo el directorio silenciosamente, es decir, imprime por
+  STDOUT la información solo correspondiente a los tests. La salida
+  correspondiente a compilación y limpieza es desviada hacia
+  /dev/null. Lo que hace para testear el código es buscar todos los
+  archivos en el directorio examples que deben llamarse debe\_dar\_x,
+  con esto el script sabe que debe ejecutar el código y que el
+  resultado debe arrojar un flujo maximal igual a x. Para
+  ello parsea el output del programa, busca la línea que contiene el
+  valor del flujo maximal y lo compara. Tiene un log agradable que
+  dice que porcentaje de tests han pasado, en color verde indicando
+  el éxito y en color rojo indicando que se produjo un error. Cuando
+  se produce un error el script indica cuál era el valor esperado y
+  cual es el flujo maximal que arrojó el programa. Por lo tanto si
+  uno quisiera añadir tests lo único que debería hacer es añadir un
+  archivo llamado debe\_dar\_x al directorio y con esto funciona,+
+  calcula la proporción de tests correcta y los corre. En nuestro
+  caso hemos puesto 10 networks de ejemplo y obtuvimos un resultado
+  exitoso. Esta es la razón por la cual estamos entregando un main,
+  por si gustan probar este script.
+* Conclusiones
+Fue un laboratorio muy interesante, en el cual hemos asimilado en
+profundidad el algoritmo de Edmonds-Karp y su complejidad. Hemos
+experimentado con diversas herramientas y ha resultado muy fructífero
+en estos aspectos.
