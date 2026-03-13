@@ -1,0 +1,9 @@
+[package]
+name = "edmonds-karp-rust"
+version = "0.1.0"
+edition = "2021"
+description = "Edmonds-Karp para flujo máximo (port de la versión C)"
+
+[[bin]]
+name = "main"
+path = "src/main.rs"

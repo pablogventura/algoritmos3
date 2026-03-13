@@ -40,6 +40,13 @@ a.out
 *.a
 *.so
 *.dylib
+*.d
+# Binarios generados por make en algoritmos
+algoritmos/edmonds-karp-c/main
+
+# Rust (Cargo)
+algoritmos/edmonds-karp-rust/target/
+algoritmos/edmonds-karp-rust/main
 
 # Archivos temporales y copias
 *.bak
