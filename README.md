@@ -16,4 +16,4 @@ Material y códigos de la materia Matemática Discreta II (cursado y luego como 
 ## Notas
 
 - Las carpetas que venían de Subversion (`.svn`) están ignoradas en `.gitignore`.
-- En `algoritmos/edmonds-karp/ejemplos/` hay entradas de prueba para el algoritmo.
+- Los tests de flujo máximo están en **algoritmos/tests/flujo-maximo/** (el nombre de cada archivo indica el flujo esperado, p. ej. `debe_dar_4` → 4). `edmonds-karp/ejemplos` y `lab/examples` apuntan ahí.
