@@ -4,21 +4,28 @@
 """
 Algoritmo de Dinic para flujo máximo.
 Red inyectable (capacidades c, flujos f) y salida inyectable (stream).
+Con --stdin lee líneas "x y cap" por stdin (fuente 0, sumidero 1) e imprime el flujo maximal.
 """
 
+import argparse
 import sys
 
 
+def _arista(v, w):
+    """Clave de arista: (v,w) para soportar vértices con id de cualquier longitud."""
+    return (v, w)
+
+
 def vecinos_mas(v, red):
-    """Vecinos salientes de v en la red (red: dict con claves 'xy')."""
-    result = [k[1] for k in red if k[0] == v]
+    """Vecinos salientes de v en la red (red: dict con claves (a,b))."""
+    result = [b for (a, b) in red if a == v]
     result.sort()
     return result
 
 
 def vecinos_menos(v, red):
     """Vecinos entrantes de v en la red."""
-    result = [k[0] for k in red if k[1] == v]
+    result = [a for (a, b) in red if b == v]
     result.sort()
     return result
 
@@ -35,7 +42,7 @@ def red_residual(c, f):
         v = q.pop(0)
         for w in vecinos_mas(v, c):
             if "1" not in visitado or w == "1":
-                arista = v + w
+                arista = _arista(v, w)
                 if arista in c and (w not in visitado or visitado[w] == visitado[v] + 1):
                     if c[arista] - f[arista] > 0:
                         visitado[w] = visitado[v] + 1
@@ -43,12 +50,12 @@ def red_residual(c, f):
                         result[arista] = (c[arista] - f[arista], False)
         for w in vecinos_menos(v, c):
             if "1" not in visitado or w == "1":
-                arista_rev = w + v
+                arista_rev = _arista(w, v)
                 if arista_rev in f and (w not in visitado or visitado[w] == visitado[v] + 1):
                     if f[arista_rev] > 0:
                         visitado[w] = visitado[v] + 1
                         q.append(w)
-                        result[v + w] = (f[arista_rev], True)
+                        result[_arista(v, w)] = (f[arista_rev], True)
 
     return result
 
@@ -69,19 +76,19 @@ def camino_dfs(na, c, f):
                 agrego = True
                 visitado.append(w)
                 s.append(w)
-                arista = v + w
+                arista = _arista(v, w)
                 if not na[arista][1]:
                     result[arista] = (c[arista] - f[arista], False)
                 else:
-                    result[arista] = (f[w + v], True)
+                    result[arista] = (f[_arista(w, v)], True)
                 if w == "1":
                     return result
                 break
         if not agrego:
             for w in vecinos_mas(v, result):
-                del result[v + w]
+                del result[_arista(v, w)]
             for w in vecinos_menos(v, result):
-                del result[w + v]
+                del result[_arista(w, v)]
             del s[-1]
 
     return result
@@ -98,7 +105,8 @@ def formato_camino(camino):
     while w_list:
         assert len(w_list) == 1
         w = w_list[0]
-        if not camino[v + w][1]:
+        arista = _arista(v, w)
+        if not camino[arista][1]:
             result += "," + w
         else:
             result += "<" + w
@@ -119,17 +127,18 @@ def actualizar_flujo(na, camino, f):
             if na[arista][0] == 0:
                 del na[arista]
         else:
-            rev = w + v
+            rev = _arista(w, v)
             f[rev] = f.get(rev, 0) - fc
             na[arista] = (na[arista][0] - fc, na[arista][1])
             if na[arista][0] == 0:
                 del na[arista]
 
 
-def run(capacidades, flujos, output_stream=None):
+def run(capacidades, flujos, output_stream=None, solo_valor=False):
     """
     Ejecuta Dinic sobre la red (capacidades, flujos).
     Escribe los caminos y el valor del flujo maximal en output_stream.
+    Si solo_valor es True, solo escribe la línea del flujo maximal (para tests).
     Devuelve el valor del flujo maximal.
     """
     if output_stream is None:
@@ -138,25 +147,53 @@ def run(capacidades, flujos, output_stream=None):
     f = flujos
     caminos_str = []
     aux = red_residual(c, f)
-    while "1" in [k[1] for k in aux]:
+    while "1" in [b for (_, b) in aux]:
         camino = camino_dfs(aux, c, f)
-        while "1" in [k[1] for k in camino]:
+        while "1" in [b for (_, b) in camino]:
             caminos_str.append(formato_camino(camino))
             actualizar_flujo(aux, camino, f)
             camino = camino_dfs(aux, c, f)
         aux = red_residual(c, f)
-    for linea in caminos_str:
-        output_stream.write(linea + "\n")
+    if not solo_valor:
+        for linea in caminos_str:
+            output_stream.write(linea + "\n")
     total = sum(f[k] for k in f if k[0] == "0")
     output_stream.write("Valor del flujo maximal : %s\n" % total)
     return total
 
 
+def grafo_desde_stdin(stream):
+    """Lee líneas 'x y cap' del stream y devuelve (c, f) con claves de arista (str(x), str(y))."""
+    c = {}
+    for line in stream:
+        line = line.strip()
+        if not line:
+            continue
+        parts = line.split()
+        if len(parts) != 3:
+            continue
+        try:
+            x, y, cap = str(parts[0]), str(parts[1]), int(parts[2])
+        except ValueError:
+            continue
+        arista = _arista(x, y)
+        c[arista] = cap
+    f = {arista: 0 for arista in c}
+    return c, f
+
+
 def main():
-    """Punto de entrada: grafo interno y salida estándar."""
-    from grafo import get_grafo_interno
-    c, f = get_grafo_interno()
-    run(c, f, sys.stdout)
+    """Punto de entrada: grafo interno o --stdin (x y cap por stdin)."""
+    parser = argparse.ArgumentParser(description="Dinic: flujo máximo")
+    parser.add_argument("--stdin", action="store_true", help="Leer red por stdin (líneas 'x y cap'); fuente 0, sumidero 1")
+    args = parser.parse_args()
+    if args.stdin:
+        c, f = grafo_desde_stdin(sys.stdin)
+        run(c, f, sys.stdout, solo_valor=True)
+    else:
+        from grafo import get_grafo_interno
+        c, f = get_grafo_interno()
+        run(c, f, sys.stdout)
 
 
 if __name__ == "__main__":
