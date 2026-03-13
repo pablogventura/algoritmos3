@@ -16,6 +16,7 @@ def read_network(stream=None):
     """
     Lee líneas 'x y cap' desde stream (por defecto stdin) y construye la red.
     Devuelve (MatrizCap, None) o (None, mensaje_error) si falla.
+    Ordena adyacencias al final para BFS determinista y menos coste en agregar_lado.
     """
     if stream is None:
         stream = sys.stdin
@@ -29,6 +30,7 @@ def read_network(stream=None):
             if m:
                 x, y, cap = int(m.group(1)), int(m.group(2)), int(m.group(3))
                 red.agregar_lado(x, y, cap)
+        red.finalize()
     except (ValueError, KeyError) as e:
         return None, str(e)
     return red, None

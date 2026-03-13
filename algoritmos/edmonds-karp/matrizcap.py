@@ -8,25 +8,34 @@ from vertex_display import vertex_to_str
 
 
 class MatrizCap:
-    """Red como matriz de capacidades y flujo actual por arista."""
+    """
+    Red como matriz de capacidades y flujo actual por arista.
+    Tras agregar todos los lados, llamar a finalize() para ordenar adyacencias (opcional pero recomendado).
+    """
 
     def __init__(self):
         self.matriz = {}
         self.g_mas = {}
         self.g_menos = {}
         self._cache_flujo_desde_fuente = 0
+        self._finalized = False
 
     def agregar_lado(self, x, y, cap):
         """Agrega la arista (x, y) con capacidad cap; flujo inicial 0."""
         self.matriz[(x, y)] = (cap, 0)
-        if x not in self.g_mas:
-            self.g_mas[x] = []
-        self.g_mas[x].append(y)
-        self.g_mas[x].sort()
-        if y not in self.g_menos:
-            self.g_menos[y] = []
-        self.g_menos[y].append(x)
-        self.g_menos[y].sort()
+        self.g_mas.setdefault(x, []).append(y)
+        self.g_menos.setdefault(y, []).append(x)
+        self._finalized = False
+
+    def finalize(self):
+        """Ordena listas de adyacencia una sola vez. Llamar tras terminar de agregar lados."""
+        if self._finalized:
+            return
+        for v in self.g_mas:
+            self.g_mas[v].sort()
+        for v in self.g_menos:
+            self.g_menos[v].sort()
+        self._finalized = True
 
     def capacidad_total(self, x, y):
         """Capacidad total del lado (x, y)."""

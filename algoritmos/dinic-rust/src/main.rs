@@ -1,12 +1,24 @@
-//! Dinic para flujo máximo.
-//! Entrada: líneas "x y cap" por stdin. Fuente = 0, sumidero = 1.
+//! # Dinic — flujo máximo
+//!
+//! Entrada: líneas `x y cap` por stdin. Fuente = 0, sumidero = 1.
 //! Con la feature `parallel` se paraleliza el BFS por niveles (rayon). Requiere Rust 1.80+.
+//!
+//! Estructura del módulo:
+//! - Tipos: `Edge`, `Vertex`, `Network`, `DinicState`
+//! - Red: construcción (`add_edge`, `set_source_sink`)
+//! - Niveles: `bfs_levels` (BFS en la red residual)
+//! - Blocking flow: `dfs_blocking`, `blocking_flow`, `run_dinic`
+//! - I/O: `main` (lectura stdin, salida del valor del flujo)
 
 use std::collections::VecDeque;
 use std::io::{self, BufRead, BufReader, Write};
 
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
+
+// -----------------------------------------------------------------------------
+// Tipos de la red
+// -----------------------------------------------------------------------------
 
 type VertexId = usize;
 type EdgeId = usize;
@@ -50,6 +62,10 @@ struct DinicState {
     #[cfg(feature = "parallel")]
     level_b: Vec<VertexId>,
 }
+
+// -----------------------------------------------------------------------------
+// Construcción de la red
+// -----------------------------------------------------------------------------
 
 impl Network {
     fn new() -> Self {
@@ -99,7 +115,11 @@ impl Network {
         self.vertices.len()
     }
 
-    /// BFS en la red residual: asigna nivel (distancia) desde source. Devuelve true si sink es alcanzable.
+    // -------------------------------------------------------------------------
+    // BFS de niveles (red residual)
+    // -------------------------------------------------------------------------
+
+    /// Asigna nivel (distancia) desde source. Devuelve true si el sumidero es alcanzable.
     #[cfg(not(feature = "parallel"))]
     fn bfs_levels(&mut self, state: &mut DinicState) -> bool {
         state.level.fill(LEVEL_UNREACHABLE);
@@ -183,8 +203,11 @@ impl Network {
         false
     }
 
-    /// DFS desde v hacia sink en el grafo de niveles; devuelve (flujo enviado, camino como aristas).
-    /// path: [(EdgeId, is_forward)]. Current arc se actualiza en state.
+    // -------------------------------------------------------------------------
+    // Flujo bloqueante (DFS con current arc)
+    // -------------------------------------------------------------------------
+
+    /// DFS desde v hacia el sumidero en el grafo de niveles. Current arc en `state` evita reescanear aristas.
     fn dfs_blocking(
         &mut self,
         v: VertexId,
@@ -269,9 +292,12 @@ impl Network {
     }
 }
 
+// -----------------------------------------------------------------------------
+// Entrada/salida
+// -----------------------------------------------------------------------------
+
 fn main() -> io::Result<()> {
-    let stdin = io::stdin();
-    let reader = BufReader::with_capacity(256 * 1024, stdin.lock());
+    let reader = BufReader::with_capacity(256 * 1024, io::stdin().lock());
     let mut network = Network::new();
 
     for line in reader.lines() {
