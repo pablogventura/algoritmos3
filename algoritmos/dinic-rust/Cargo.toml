@@ -1,0 +1,21 @@
+[package]
+name = "dinic-rust"
+version = "0.1.0"
+edition = "2021"
+description = "Dinic para flujo máximo (entrada igual que EK: x y cap, fuente 0, sumidero 1)"
+
+[features]
+default = []
+parallel = ["dep:rayon"]
+
+[dependencies]
+rayon = { version = "1.10", optional = true }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+
+[[bin]]
+name = "main"
+path = "src/main.rs"

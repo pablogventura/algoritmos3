@@ -47,6 +47,8 @@ algoritmos/edmonds-karp-c/main
 # Rust (Cargo)
 algoritmos/edmonds-karp-rust/target/
 algoritmos/edmonds-karp-rust/main
+algoritmos/dinic-rust/target/
+algoritmos/dinic-rust/main
 
 # Archivos temporales y copias
 *.bak

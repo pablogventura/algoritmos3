@@ -27,6 +27,7 @@ FLUJO_MAXIMO = os.path.join(TESTS_DIR, "flujo-maximo")
 IMPL_DISPLAY_NAME = {
     "edmonds-karp-c": "Edmonds-Karp (C)",
     "edmonds-karp-rust": "Edmonds-Karp (Rust)",
+    "dinic-rust": "Dinic (Rust)",
 }
 
 # Nombres cortos para la tabla de tiempos
@@ -35,12 +36,16 @@ IMPL_SHORT_NAME = {
     "edmonds-karp-letras": "EK letras",
     "edmonds-karp-c": "EK (C)",
     "edmonds-karp-rust": "EK (Rust)",
+    "dinic-rust": "Dinic Rust",
 }
 
 # Implementaciones que comparten los mismos tests (flujo máximo) para comparar tiempos
 IMPL_EDMONDS_KARP_FAMILY = frozenset({
     "edmonds-karp", "edmonds-karp-letras", "edmonds-karp-c", "edmonds-karp-rust",
 })
+
+# Incluye EK y Dinic Rust para la tabla comparativa de tiempos (mismos tests por archivo)
+IMPL_COMPARATIVA_TIEMPOS = IMPL_EDMONDS_KARP_FAMILY | frozenset({"dinic-rust"})
 
 def _ensure_compiled(desc, cwd, build_cmd, binary_path):
     """Si el binario no existe, ejecuta build_cmd en cwd. Devuelve True si el binario está listo."""
@@ -97,6 +102,16 @@ def get_impls():
     dinic_py = os.path.join(dinic_dir, "dinic.py")
     if os.path.isfile(dinic_py):
         impls["dinic"] = ([py, "dinic.py"], dinic_dir)
+    # Dinic Rust: misma entrada que EK (stdin "x y cap"), compila con parallel por defecto
+    dinic_rust_dir = os.path.join(REPO_ROOT, "algoritmos", "dinic-rust")
+    main_dinic_rust = os.path.join(dinic_rust_dir, "target", "release", "main")
+    if os.path.isdir(dinic_rust_dir):
+        if _ensure_compiled(
+            "Dinic (Rust)", dinic_rust_dir,
+            ["cargo", "build", "--release", "--features", "parallel"],
+            main_dinic_rust,
+        ):
+            impls["dinic-rust"] = ([main_dinic_rust], dinic_rust_dir)
     return impls
 
 
@@ -124,7 +139,7 @@ def extract_flow_value(output):
 
 
 def _imprimir_comparativa_tiempos(tiempos_ek, tests):
-    """Imprime tabla de tiempos entre las implementaciones Edmonds-Karp (ordenadas por velocidad)."""
+    """Imprime tabla de tiempos entre las implementaciones de flujo máximo (EK y Dinic Rust)."""
     if not tiempos_ek or not tests:
         return
     test_names = [t[0] for t in tests]
@@ -133,7 +148,7 @@ def _imprimir_comparativa_tiempos(tiempos_ek, tests):
     w_name = min(28, max(10, max(len(n) for n in test_names) + 2))
     w_col = 11
     sep = "  "
-    print("\n--- Comparativa de tiempos (Edmonds-Karp, de más rápido a más lento) ---")
+    print("\n--- Comparativa de tiempos (flujo máximo: EK y Dinic Rust, de más rápido a más lento) ---")
     header_cells = ["Test".ljust(w_name)] + [
         IMPL_SHORT_NAME.get(i, IMPL_DISPLAY_NAME.get(i, i))[:w_col].ljust(w_col)
         for i in impls_orden
@@ -206,7 +221,7 @@ def run_one_test(impl_name, cmd_and_cwd, test_path):
 
 def main():
     parser = argparse.ArgumentParser(description="Tests de flujo máximo para todos los algoritmos")
-    parser.add_argument("--impl", choices=["edmonds-karp", "edmonds-karp-letras", "edmonds-karp-c", "edmonds-karp-rust", "dinic"], help="Solo esta implementación")
+    parser.add_argument("--impl", choices=["edmonds-karp", "edmonds-karp-letras", "edmonds-karp-c", "edmonds-karp-rust", "dinic", "dinic-rust"], help="Solo esta implementación")
     parser.add_argument("--list", action="store_true", help="Listar tests y salir")
     args = parser.parse_args()
 
@@ -218,7 +233,7 @@ def main():
     if args.impl:
         impls = {k: v for k, v in impls.items() if k == args.impl}
     if not impls:
-        print("Ninguna implementación disponible (C: make en edmonds-karp-c; Rust: cargo build --release --features parallel en edmonds-karp-rust).", file=sys.stderr)
+        print("Ninguna implementación disponible (C: make en edmonds-karp-c; Rust: cargo build --release --features parallel en edmonds-karp-rust y dinic-rust).", file=sys.stderr)
         print("El resto usa Python 3.", file=sys.stderr)
         sys.exit(1)
 
@@ -249,7 +264,7 @@ def main():
 
     total_ok = 0
     total_fail = 0
-    # Tiempos por implementación y test (solo para las 3 Edmonds-Karp)
+    # Tiempos por implementación y test (EK y Dinic Rust para comparativa)
     tiempos_ek = {}  # impl_name -> { test_name -> segundos }
 
     for impl_name, cmd_cwd in impls.items():
@@ -300,11 +315,11 @@ def main():
                 total_fail += 1
                 print("  FAIL test_dinic_grafos: {}".format(e))
             continue
-        if impl_name in IMPL_EDMONDS_KARP_FAMILY:
+        if impl_name in IMPL_COMPARATIVA_TIEMPOS:
             tiempos_ek[impl_name] = {}
         for name, path, expected in tests:
             got, err, elapsed = run_one_test(impl_name, cmd_cwd, path)
-            if impl_name in IMPL_EDMONDS_KARP_FAMILY:
+            if impl_name in IMPL_COMPARATIVA_TIEMPOS:
                 tiempos_ek[impl_name][name] = elapsed
             if err:
                 print("  FAIL {}: {}".format(name, err))
@@ -323,7 +338,7 @@ def main():
 
     print("\nTotal: {} OK, {} FAIL".format(total_ok, total_fail))
 
-    # Comparativa de tiempos entre las implementaciones Edmonds-Karp
+    # Comparativa de tiempos (EK y Dinic Rust)
     if len(tiempos_ek) >= 2:
         _imprimir_comparativa_tiempos(tiempos_ek, tests)
     sys.exit(1 if total_fail else 0)
