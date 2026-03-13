@@ -79,14 +79,14 @@ def get_impls():
     if os.path.isdir(ek_c_dir):
         if _ensure_compiled("Edmonds-Karp (C)", ek_c_dir, ["make"], main_c):
             impls["edmonds-karp-c"] = ([main_c], ek_c_dir)
-    # Rust: Edmonds-Karp. Compila con cargo build --release si no existe el binario.
+    # Rust: Edmonds-Karp. Compila con cargo build --release --features parallel si no existe el binario.
     ek_rust_dir = os.path.join(REPO_ROOT, "algoritmos", "edmonds-karp-rust")
     main_rust_release = os.path.join(ek_rust_dir, "target", "release", "main")
     main_rust = os.path.join(ek_rust_dir, "main")
     if os.path.isdir(ek_rust_dir):
         if _ensure_compiled(
             "Edmonds-Karp (Rust)", ek_rust_dir,
-            ["cargo", "build", "--release"],
+            ["cargo", "build", "--release", "--features", "parallel"],
             main_rust_release,
         ):
             impls["edmonds-karp-rust"] = ([main_rust_release], ek_rust_dir)
@@ -218,7 +218,7 @@ def main():
     if args.impl:
         impls = {k: v for k, v in impls.items() if k == args.impl}
     if not impls:
-        print("Ninguna implementación disponible (C: make en edmonds-karp-c; Rust: cargo build --release en edmonds-karp-rust).", file=sys.stderr)
+        print("Ninguna implementación disponible (C: make en edmonds-karp-c; Rust: cargo build --release --features parallel en edmonds-karp-rust).", file=sys.stderr)
         print("El resto usa Python 3.", file=sys.stderr)
         sys.exit(1)
 

@@ -1,8 +1,14 @@
 //! Edmonds-Karp para flujo máximo. Port de la implementación en C.
 //! Entrada: líneas "x y cap" por stdin. Fuente = 0, sumidero = 1.
+//!
+//! Con la feature `parallel` se usa BFS por niveles paralelizado (rayon); suele
+//! compensar solo en grafos muy grandes y anchos. Requiere Rust 1.80+.
 
 use std::collections::VecDeque;
 use std::io::{self, BufRead, BufReader, Write};
+
+#[cfg(feature = "parallel")]
+use rayon::prelude::*;
 
 type VertexId = usize;
 type EdgeId = usize;
@@ -42,6 +48,11 @@ struct BfsInfo {
     accumulated_flow: Vec<u64>,
     /// Cola reutilizada entre BFS para evitar allocs en el bucle principal.
     queue: VecDeque<VertexId>,
+    #[cfg(feature = "parallel")]
+    /// Buffers para BFS por niveles (current/next) cuando se usa la variante paralela.
+    level_a: Vec<VertexId>,
+    #[cfg(feature = "parallel")]
+    level_b: Vec<VertexId>,
 }
 
 impl Network {
@@ -94,6 +105,7 @@ impl Network {
 
     /// BFS desde source hacia sink. Devuelve true si hay camino aumentante.
     /// Rellena BfsInfo: cut, ancestor, ancestor_edge, accumulated_flow.
+    #[cfg(not(feature = "parallel"))]
     fn find_shortest_augmenting_path(&mut self, info: &mut BfsInfo) -> bool {
         let n = self.num_vertices();
         info.in_cut.fill(false);
@@ -139,6 +151,78 @@ impl Network {
                     info.queue.push_back(w);
                 }
             }
+        }
+        false
+    }
+
+    /// BFS por niveles en paralelo (solo con feature "parallel"). Cada nivel se explora en paralelo.
+    #[cfg(feature = "parallel")]
+    fn find_shortest_augmenting_path(&mut self, info: &mut BfsInfo) -> bool {
+        let n = self.num_vertices();
+        info.in_cut.fill(false);
+        for i in 0..n {
+            info.ancestor[i] = None;
+            info.ancestor_edge[i] = None;
+            info.accumulated_flow[i] = u64::MAX;
+        }
+
+        let (current, next) = (&mut info.level_a, &mut info.level_b);
+        current.clear();
+        next.clear();
+        current.push(self.source);
+        info.in_cut[self.source] = true;
+        info.accumulated_flow[self.source] = u64::MAX;
+
+        let vertices = &self.vertices;
+        let edges = &self.edges;
+        let sink = self.sink;
+
+        while !current.is_empty() {
+            let flows: Vec<u64> = current.iter().map(|&v| info.accumulated_flow[v]).collect();
+            let discoveries: Vec<(VertexId, VertexId, EdgeId, u64)> = current
+                .par_iter()
+                .enumerate()
+                .flat_map(|(i, &v)| {
+                    let acc = flows[i];
+                    let mut list = Vec::new();
+                    for &eid in &vertices[v].forward_edges {
+                        let e = &edges[eid];
+                        let w = e.to;
+                        let res = e.capacity.saturating_sub(e.flow) as u64;
+                        if res > 0 {
+                            list.push((w, v, eid, acc.min(res)));
+                        }
+                    }
+                    for &eid in &vertices[v].backward_edges {
+                        let e = &edges[eid];
+                        if e.flow > 0 {
+                            let w = e.from;
+                            list.push((w, v, eid, acc.min(e.flow as u64)));
+                        }
+                    }
+                    list
+                })
+                .collect();
+
+            for (w, u, eid, flow) in discoveries {
+                if info.in_cut[w] {
+                    continue;
+                }
+                info.in_cut[w] = true;
+                info.ancestor[w] = Some(u);
+                info.ancestor_edge[w] = Some(eid);
+                info.accumulated_flow[w] = flow;
+                next.push(w);
+                if w == sink {
+                    return true;
+                }
+            }
+
+            if next.is_empty() {
+                return false;
+            }
+            std::mem::swap(current, next);
+            next.clear();
         }
         false
     }
@@ -205,6 +289,10 @@ fn main() -> io::Result<()> {
         ancestor_edge: vec![None; n],
         accumulated_flow: vec![0; n],
         queue: VecDeque::with_capacity(n),
+        #[cfg(feature = "parallel")]
+        level_a: Vec::with_capacity(n),
+        #[cfg(feature = "parallel")]
+        level_b: Vec::with_capacity(n),
     };
 
     let mut max_flow: u64 = 0;
