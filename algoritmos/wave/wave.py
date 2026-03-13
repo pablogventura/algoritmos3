@@ -1,6 +1,13 @@
+"""
+Red de flujo con aristas en formato "xy" (ej. "0A", "F1").
+Funciones para vecinos, red residual (na) y niveles (BFS).
+Fuente "0", sumidero "1".
+"""
+from collections import deque
 from functools import reduce
 
-nw={"0A":8,
+# Ejemplo: capacidades por arista (clave "xy" = arista de x a y)
+nw = {
     "0C":7,
     "0D":10,
     "0E":7,
@@ -19,114 +26,111 @@ nw={"0A":8,
     "G1":5,
     "H1":4,
     "I1":9,
-    "J1":15}
+    "J1": 15,
+}
+
 
 def vecinosMas(v, n):
-    result = []
-    for lado in n:
-        if lado[0] == v:
-            result += lado[1]
-    result.sort()
-    return result
+    """Vecinos salientes de v cuando n es un dict arista_str -> capacidad (ej. "0A" -> 8)."""
+    return sorted({arista[1] for arista in n if len(arista) >= 2 and arista[0] == v})
+
 
 def vecinosMenos(v, n):
-    result = []
-    for lado in n:
-        if lado[1] == v:
-            result += lado[0]
-    result.sort()
-    return result
+    """Vecinos entrantes de v cuando n es un dict arista_str -> capacidad."""
+    return sorted({arista[0] for arista in n if len(arista) >= 2 and arista[1] == v})
 
-def na(c,f):
+
+def na(c, f):
+    """
+    Red residual (niveles) desde "0" hacia "1".
+    c, f: dict arista_str -> capacidad / flujo. Devuelve dict arista -> (residual, es_backward).
+    """
     result = {}
-    q = [] # es una cola FIFO
-    visitado = {}
-    q.append("0")
-    visitado["0"] = 0
-    #result = {}
-    #for v in grafo:
-    #    result[v] = []
-    
-    while q:
-        v = q.pop(0) # lo toma del principio
-        for w in vecinosMas(v,c):
-            if "1" not in visitado or w == "1":
-                if (w not in visitado or visitado[w] == visitado[v] + 1) and c[v+w]-f[v+w] > 0:
+    visitado = {"0": 0}
+    cola = deque(["0"])
+
+    while cola:
+        v = cola.popleft()
+        for w in vecinosMas(v, c):
+            if ("1" not in visitado or w == "1") and (w not in visitado or visitado[w] == visitado[v] + 1):
+                if c.get(v + w, 0) - f.get(v + w, 0) > 0:
                     visitado[w] = visitado[v] + 1
-                    q.append(w) # lo inserta al final
-                    result[v+w] = (c[v+w]-f[v+w],False)
-        for w in vecinosMenos(v,c):
-            if "1" not in visitado or w == "1":
-                if (w not in visitado or visitado[w] == visitado[v] + 1) and f[w+v] > 0:
+                    cola.append(w)
+                    result[v + w] = (c[v + w] - f.get(v + w, 0), False)
+        for w in vecinosMenos(v, c):
+            if ("1" not in visitado or w == "1") and (w not in visitado or visitado[w] == visitado[v] + 1):
+                if f.get(w + v, 0) > 0:
                     visitado[w] = visitado[v] + 1
-                    q.append(w) # lo inserta al final
-                    result[v+w] = (f[w+v],True)
+                    cola.append(w)
+                    result[v + w] = (f[w + v], True)
 
     return result
 
 
 def arbolBFS(grafo):
     """
-    Devuelve el arbol BFS de un grafo desde un origen dado.
+    Árbol BFS del grafo desde "0". grafo: dict arista_str -> capacidad (solo se usan las claves).
+    Devuelve dict vértice -> lista de vecinos en el árbol.
     """
-    q = [] # es una cola FIFO
-    visitado = []
-    q.append("0")
-    visitado.append("0")
-    result = {}
-    for v in grafo:
-        result[v] = []
-    
-    while q:
-        v = q.pop(0) # lo toma del principio
-        for w in vecinosMas(v,grafo):
+    visitado = {"0"}
+    cola = deque(["0"])
+    result = {v: [] for v in set(k[0] for k in grafo) | set(k[1] for k in grafo)}
+
+    while cola:
+        v = cola.popleft()
+        for w in vecinosMas(v, grafo):
             if w not in visitado:
-                visitado.append(w)
-                q.append(w) # lo inserta al final
-                result[v] += [w]
-                result[w] += [v]
+                visitado.add(w)
+                cola.append(w)
+                result[v].append(w)
+                result[w].append(v)
         result[v].sort()
 
     return result
 
 def soloprim(lista):
-    result = []
-    for x in lista:
-        if x not in result:
-            result.append(x)
-    return result
+    """Elimina duplicados preservando el orden de primera aparición."""
+    seen = set()
+    return [x for x in lista if x not in seen and not seen.add(x)]
+
 
 def niveles(n):
+    """
+    Niveles BFS desde "0" en la red n (dict arista_str -> valor).
+    result[i] = lista de vértices a distancia i.
+    """
     result = [["0"]]
-    temp = []
-    while set([x[0] for x in n.keys()] + [x[1] for x in n.keys()]) != set(reduce(lambda x,y:x+y,result)):
-        #print((set([x[0] for x in n.keys()] + [x[1] for x in n.keys()]), set(reduce(lambda x,y:x+y,result))))
+    todos = set(k[0] for k in n) | set(k[1] for k in n)
+    while set(reduce(lambda a, b: a + b, result)) != todos:
         temp = []
         for x in result[-1]:
-            temp += vecinosMas(x,n)
-        #print((temp,soloprim(temp)))
-        temp = soloprim(temp)            
-        result.append(temp)
+            temp.extend(vecinosMas(x, n))
+        result.append(soloprim(temp))
     return result
 
 def wave(n):
-    c=dict(n)
-    f=dict(n)
-    for k in f:
-        f[k] = 0
-    b={k:False for k in list(set([x[0] for x in n.keys()] + [x[1] for x in n.keys()]))}#bloqueados
-    emu={k:[] for k in list(set([x[0] for x in n.keys()] + [x[1] for x in n.keys()]))}#bloqueados
-    aux = na(c,f)
+    """
+    Algoritmo wave (flujo en niveles). n: dict arista_str -> capacidad.
+    Calcula red residual, niveles, y devuelve niveles. (Parte final por completar.)
+    """
+    c = dict(n)
+    f = {k: 0 for k in c}
+    vertices = set(x[0] for x in n) | set(x[1] for x in n)
+    b = {k: False for k in vertices}
+    emu = {k: [] for k in vertices}
+    aux = na(c, f)
     niv = niveles(aux)
-    l = reduce(lambda x,y:x+y,niv)
+    l = reduce(lambda x, y: x + y, niv)
+    if not l:
+        return niv
     v = l[0]
-    for w in vecinosMas(v,aux);
-        if not b(w):
-            f[v+w]+=c[v+w]-f[v+w]
-            emu[w].append(emu[-1]+c[v+w]-f[v+w])
-    
-    
-    d["0"] = sum([c("0"+x) for x in vecinosMas(x,n
+    for w in vecinosMas(v, aux):
+        if not b.get(w, False):
+            arista_vw = v + w
+            delta = c.get(arista_vw, 0) - f.get(arista_vw, 0)
+            if delta > 0:
+                f[arista_vw] = f.get(arista_vw, 0) + delta
+                emu[w].append((emu.get(v, [])[-1] if emu.get(v) else 0) + delta)
     return niv
     
     

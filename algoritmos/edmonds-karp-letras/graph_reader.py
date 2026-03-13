@@ -48,6 +48,7 @@ def read_network(stream=None):
             if m:
                 x, y, cap = int(m.group(1)), int(m.group(2)), int(m.group(3))
                 red.agregar_lado(x, y, cap)
+        red.finalize()
     except (ValueError, KeyError) as e:
         return None, str(e)
     return red, None

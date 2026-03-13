@@ -1,12 +1,14 @@
-import numpy
-
-from numpy import matrix
-from numpy import transpose
-from numpy import shape
-from numpy import concatenate
+"""
+Códigos lineales sobre Z₂: clase z2, matrices, conversión y matriz de chequeo.
+"""
 import itertools
+import numpy
+from numpy import concatenate, matrix, shape, transpose
+
 
 class z2(object):
+    """Elemento del cuerpo Z₂ (entero módulo 2). Soporta +, -, *, ==."""
+
     def __init__(self, valor):
         self.valor = int(valor) % 2
     def __add__(self, otro):
@@ -26,21 +28,14 @@ class z2(object):
 
 
 def recorre(n):
-    result = list(itertools.product(*(("01",)*n))) # asterisco para *args
-    result = map("".join,result)
-    return result
+    """Todas las cadenas binarias de longitud n (orden lexicográfico)."""
+    return ["".join(t) for t in itertools.product(*(("01",) * n))]
 
-        
 
 def identidad(n):
-    temp = numpy.identity(n)
-    temp = temp.tolist()
-    result = []
-    for fila in temp:
-        nfila = map(int,fila)
-        nfila = map(z2,fila)
-        result.append(nfila)
-    return matrix(result)
+    """Matriz identidad n×n con entradas en Z₂."""
+    temp = numpy.identity(n).tolist()
+    return matrix([[z2(int(x)) for x in fila] for fila in temp])
 
 def _convertir(cadena):
     result = list(cadena)

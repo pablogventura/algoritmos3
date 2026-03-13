@@ -1,4 +1,8 @@
-g1 = {"a":["b","d","h"],
+"""
+Grafos de ejemplo y utilidades para coloreo (grafos completos k(n), ciclos c(n)).
+Grafo: dict vértice -> lista de vecinos.
+"""
+g1 = {"a": ["b", "d", "h"],
       "b":["a","c","d","e"],
       "c":["b","d","g"],
       "d":["a","b","c"],

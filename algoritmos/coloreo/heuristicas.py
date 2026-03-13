@@ -1,4 +1,10 @@
-g = {"a" :["b", "e"],
+"""
+Heurísticas de coloreo de grafos: RLF, Greedy, DSatur, WP.
+Grafo: dict vértice -> lista de vecinos (adyacencia).
+"""
+import probando  # noqa: F401 — grafos de ejemplo (g1, g2, p, k, c)
+
+g = {"a": ["b", "e"],
      "b" :["a", "c", "d"],
      "c" :["b", "e"],
      "d" :["b", "f", "g"],
@@ -20,12 +26,6 @@ g = {"a" :["b", "e"],
      "j6":["i1"],
      "j7":["i1"],
      }
-# TODO un network podria ser un diccionario como el de grafos, poniendo en "a",
-# los vertices a los que se llega desde "a" (para indicar el sentido) en una
-# tupla junto con la capacidad de la arista
-
-
-import probando
 def rlf(grafo):
     """
     Devuelve un coloreo propio usando la heuristica RLF
@@ -70,10 +70,9 @@ def greedy(grafo,orden):
 
 def paso_greedy(grafo, coloreoparcial, vertice):
     """
-    Devuelve un diccionario de vertices y colores, haciendo un coloreo greedy
-    en algun orden dado sobre el grafo.
+    Asigna el menor color posible a `vertice` dado un coloreo parcial.
+    Devuelve el coloreo actualizado (copia con vertice añadido).
     """
-    # hay mucho para mejorar
     result = {}
     for v in sorted(grafo.keys()):
         try:
@@ -85,18 +84,14 @@ def paso_greedy(grafo, coloreoparcial, vertice):
     except Exception:
         ultimocolor = 1
 
-    coloresvecinos = []
-    for vecino in grafo[vertice]:
-        if result[vecino]:
-            coloresvecinos.append(result[vecino])
-    coloresdisponibles = set(range(1,ultimocolor+1)) - set(coloresvecinos)
+    coloresvecinos = {result[vecino] for vecino in grafo[vertice] if result.get(vecino)}
+    coloresdisponibles = set(range(1, ultimocolor + 1)) - coloresvecinos
     
     if coloresdisponibles:
-        result[vertice] = sorted(coloresdisponibles)[0]
+        result[vertice] = min(coloresdisponibles)
     else:
-        result[vertice] = ultimocolor + 1
         ultimocolor += 1
-    
+        result[vertice] = ultimocolor
     return result[vertice]
 
 def coloresvecinos(grafo,coloreo,v):
@@ -109,21 +104,19 @@ def coloresvecinos(grafo,coloreo,v):
             #print "el vertice %s no estaba coloreado" % vecino
     return result
 
-def v_coloresvecinos(grafo,coloreo):
+def v_coloresvecinos(grafo, coloreo):
     """
-    Devuelve una lista de vertices no coloreados con mas colores vecinos.
+    Vértices no coloreados con mayor número de colores distintos en sus vecinos.
     """
     result = {}
-    for v in grafo.keys():
-        result[v] = []
-        for w in grafo[v]:
-            if w in coloreo.keys():
-                result[v].append(coloreo[w])
-        result[v] = len(set(result[v]))
-    for v in coloreo.keys():
-        if v in result.keys():
-            del result[v]
-    return list(filter(lambda x: result[x] == max(result.values()), result.keys()))
+    for v in grafo:
+        if v in coloreo:
+            continue
+        result[v] = len({coloreo[w] for w in grafo[v] if w in coloreo})
+    if not result:
+        return []
+    max_val = max(result.values())
+    return [v for v in result if result[v] == max_val]
 
 def dsatur(grafo):
     result = {}

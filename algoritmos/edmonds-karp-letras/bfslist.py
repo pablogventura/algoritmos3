@@ -3,7 +3,7 @@
 
 """BFS para camino aumentante (versión letras; orden: forward primero como en original)."""
 
-from collections import namedtuple
+from collections import deque, namedtuple
 
 from constants import FUENTE, SUMIDERO
 from vertex_display import vertex_to_str
@@ -31,8 +31,9 @@ class BFS:
                 self.linea2 += ",%s    " % vertex_to_str(FUENTE)
                 self.linea3 += ",%04d " % flujo
 
-        iterador = sorted(self.bfs.keys())
-        for key in iterador:
+        cola = deque(sorted(self.bfs.keys()))
+        while cola:
+            key = cola.popleft()
             elem = self.bfs[key]
             for vecino in self._cap.gamma_mas(elem.vertice):
                 if not self._esta_en_bfs(vecino) and self._cap.no_esta_saturado(elem.vertice, vecino):
@@ -42,7 +43,7 @@ class BFS:
                     )
                     self.bfs[vecino] = BfsElem(vecino, elem.vertice, flujo, False)
                     self._append_lineas(vecino, elem.vertice, flujo, False)
-                    iterador.append(vecino)
+                    cola.append(vecino)
                     if vecino == SUMIDERO:
                         self.llego_al_sumidero = True
                         return None
@@ -54,7 +55,7 @@ class BFS:
                     )
                     self.bfs[vecino] = BfsElem(vecino, elem.vertice, flujo, True)
                     self._append_lineas(vecino, elem.vertice, flujo, True)
-                    iterador.append(vecino)
+                    cola.append(vecino)
 
         if not self.llego_al_sumidero:
             self._cache_corte_minimal = [FUENTE] + list(self.bfs.keys())

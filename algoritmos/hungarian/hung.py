@@ -1,21 +1,14 @@
+"""
+Algoritmo húngaro: asignación de costo mínimo en un grafo bipartito completo
+G = (X ∪ Y, E) con |X| = |Y|. Minimiza la suma de los pesos del matching perfecto.
 
+Nota: el código usa variables globales; una mejora sería encapsular estado en una clase.
+"""
+import sys
 from numpy import matrix
-#/*
-# Hungarian Algorithm para resolver el problema de minimizar la suma de los pesos
-# en un grafo bipartito G=(X union Y,E), con |X|=|Y|. 
-# Para Discreta II
-# El algoritmo usa varias subrutinas, pero todas variables globales.
-# Ud. deberia modificarlo para que no tenga este defecto.
-#*/
-#include <stdio.h>
 
+# Tamaño de la matriz (filas = columnas). Configurar antes de cargar.
 TAM = 0
-#/*
-#el TAM es el ``n": el tama~no de la matriz=numero de filas=numero de columnas, 
-#recordemos que solo es para matrices cuadradas
-#como ejemplo lo fijo en 8
-#ejercicio para mejorar el algoritmo: modificarlo para que lo acepte como linea de entrada.
-#*/
 
 
 ##//declarar las variables:

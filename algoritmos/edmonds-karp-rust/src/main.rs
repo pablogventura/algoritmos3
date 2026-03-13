@@ -1,14 +1,24 @@
-//! Edmonds-Karp para flujo máximo. Port de la implementación en C.
-//! Entrada: líneas "x y cap" por stdin. Fuente = 0, sumidero = 1.
+//! # Edmonds-Karp — flujo máximo
 //!
-//! Con la feature `parallel` se usa BFS por niveles paralelizado (rayon); suele
-//! compensar solo en grafos muy grandes y anchos. Requiere Rust 1.80+.
+//! Entrada: líneas `x y cap` por stdin. Fuente = 0, sumidero = 1.
+//! Con la feature `parallel` se paraleliza el BFS por niveles (rayon). Requiere Rust 1.80+.
+//!
+//! Estructura del módulo:
+//! - Tipos: `Edge`, `Vertex`, `Network`, `BfsInfo`
+//! - Red: construcción (`add_edge`, `set_source_sink`)
+//! - BFS: `find_shortest_augmenting_path` (camino aumentante más corto)
+//! - Aumento: `increase_flow` (actualiza flujo por el camino; O(1) por paso con `ancestor_edge`)
+//! - I/O: `main` (lectura stdin, salida corte minimal y valor del flujo)
 
 use std::collections::VecDeque;
 use std::io::{self, BufRead, BufReader, Write};
 
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
+
+// -----------------------------------------------------------------------------
+// Tipos de la red
+// -----------------------------------------------------------------------------
 
 type VertexId = usize;
 type EdgeId = usize;
@@ -54,6 +64,10 @@ struct BfsInfo {
     #[cfg(feature = "parallel")]
     level_b: Vec<VertexId>,
 }
+
+// -----------------------------------------------------------------------------
+// Construcción de la red
+// -----------------------------------------------------------------------------
 
 impl Network {
     fn new() -> Self {
@@ -103,7 +117,11 @@ impl Network {
         self.vertices.len()
     }
 
-    /// BFS desde source hacia sink. Devuelve true si hay camino aumentante.
+    // -------------------------------------------------------------------------
+    // BFS: camino aumentante más corto (y variante paralela por niveles)
+    // -------------------------------------------------------------------------
+
+    /// BFS desde la fuente al sumidero en la red residual. Rellena `BfsInfo` para `increase_flow`.
     /// Rellena BfsInfo: cut, ancestor, ancestor_edge, accumulated_flow.
     #[cfg(not(feature = "parallel"))]
     fn find_shortest_augmenting_path(&mut self, info: &mut BfsInfo) -> bool {
@@ -227,8 +245,11 @@ impl Network {
         false
     }
 
-    /// Aumenta el flujo a lo largo del camino encontrado por BFS. Devuelve epsilon.
-    /// Usa ancestor_edge para O(1) por paso (sin buscar la arista en las listas).
+    // -------------------------------------------------------------------------
+    // Aumento de flujo a lo largo del camino (O(1) por paso con ancestor_edge)
+    // -------------------------------------------------------------------------
+
+    /// Aumenta el flujo a lo largo del camino en `info`. Usa `ancestor_edge` para no buscar la arista.
     fn increase_flow(&mut self, info: &BfsInfo, max_flow: &mut u64) -> u32 {
         let epsilon = info.accumulated_flow[self.sink] as u32;
         *max_flow += epsilon as u64;
@@ -249,9 +270,12 @@ impl Network {
     }
 }
 
+// -----------------------------------------------------------------------------
+// Entrada/salida
+// -----------------------------------------------------------------------------
+
 fn main() -> io::Result<()> {
-    let stdin = io::stdin();
-    let reader = BufReader::with_capacity(256 * 1024, stdin.lock());
+    let reader = BufReader::with_capacity(256 * 1024, io::stdin().lock());
     let mut network = Network::new();
 
     // Leer red desde stdin: "x y cap"

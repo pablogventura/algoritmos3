@@ -1,20 +1,26 @@
+"""
+Códigos cíclicos: polinomios generadores, matrices generadora y de chequeo,
+codificación y corrección de errores (síndromes).
+"""
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "codigos")))
+import numpy
 import sympy
 import codigos
-import numpy
 
 x = sympy.var("x")
 
 
-ga = 1+x+x**3 ; na = 7
-gb = 1+x**2+x**3 ; nb = 7
-gc = 1+x**3+x**4 ; nc = 15
-gd = 1+x+x**4 ; nd=15
-ge = 1+x**2+x**4+x**6+x**7+x**10; ne=21
-gf = 1+x+x**5+x**6+x**7+x**9+x**11 ; nf=23
-gh = 1+x**4+x**6+x**7+x**8 ; nh=15
+# Polinomios generadores y longitud n del código (ejercicios)
+ga, na = 1 + x + x**3, 7
+gb, nb = 1 + x**2 + x**3, 7
+gc, nc = 1 + x**3 + x**4, 15
+gd, nd = 1 + x + x**4, 15
+ge, ne = 1 + x**2 + x**4 + x**6 + x**7 + x**10, 21
+gf, nf = 1 + x + x**5 + x**6 + x**7 + x**9 + x**11, 23
+gh, nh = 1 + x**4 + x**6 + x**7 + x**8, 15
 
 
 
@@ -23,17 +29,10 @@ def z2Pol(p):
     result = sympy.Poly(reversed(result),x)/1
     return result
 
-def corrigeCoef(dp,n):
-    """Agrega ceros al dict de coefs"""
-    result=[]
-    dp = dp.as_coefficients_dict()
-    for i in range(0,n):
-        j=x**i
-        if j in dp:
-            result.append(codigos.z2(dp[j]))
-        else:
-            result.append(codigos.z2(dp[j]))
-    return result
+def corrigeCoef(dp, n):
+    """Lista de n coeficientes en Z₂ del polinomio dp (índice 0 = término constante)."""
+    coef = dp.as_coefficients_dict()
+    return [codigos.z2(coef.get(x**i, 0)) for i in range(n)]
     
 def grado(p):
     try:
