@@ -4,8 +4,12 @@ Ejecuta los tests de flujo máximo sobre todas las implementaciones que aceptan
 entrada estándar en formato "x y c" (vértice origen, destino, capacidad).
 Fuente = 0, sumidero = 1.
 
+Tests de otros algoritmos (corte, wave, coloreo, codigos, ciclicos, hungarian):
+  python3 run_tests_otros.py
+
 Uso (desde la raíz del repo o desde algoritmos/tests):
   python3 run_tests.py
+  python3 run_tests.py --all          # flujo máximo + run_tests_otros
   python3 run_tests.py --impl edmonds-karp
   python3 run_tests.py --list
 """
@@ -228,6 +232,7 @@ def main():
     parser = argparse.ArgumentParser(description="Tests de flujo máximo para todos los algoritmos")
     parser.add_argument("--impl", choices=["edmonds-karp", "edmonds-karp-letras", "edmonds-karp-c", "edmonds-karp-rust", "dinic", "dinic-rust"], help="Solo esta implementación")
     parser.add_argument("--list", action="store_true", help="Listar tests y salir")
+    parser.add_argument("--all", action="store_true", help="Ejecutar también run_tests_otros (corte, wave, coloreo, codigos, ciclicos, hungarian)")
     args = parser.parse_args()
 
     if not os.path.isdir(FLUJO_MAXIMO):
@@ -347,6 +352,17 @@ def main():
                 total_fail += 1
 
     print("\nTotal: {} OK, {} FAIL".format(total_ok, total_fail))
+
+    if args.all:
+        print("\n" + "=" * 50)
+        print("Ejecutando tests de otros algoritmos (run_tests_otros.py)")
+        print("=" * 50)
+        ret_otros = subprocess.call(
+            [sys.executable, os.path.join(TESTS_DIR, "run_tests_otros.py")],
+            cwd=os.path.dirname(TESTS_DIR) or ".",
+        )
+        if ret_otros != 0:
+            total_fail = 1
 
     # Comparativa de tiempos EK
     tiempos_ek_only = {k: v for k, v in tiempos_ek.items() if k in IMPL_COMPARATIVA_TIEMPOS}
