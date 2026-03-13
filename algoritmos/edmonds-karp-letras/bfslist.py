@@ -1,115 +1,94 @@
-#!/usr/bin/env python
-# encoding: utf-8
-from constants import *
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""BFS para camino aumentante (versión letras; orden: forward primero como en original)."""
+
 from collections import namedtuple
 
-# Named Tuple para representar cada elemento del BFS
-BfsElem = namedtuple("BfsElem", "vertice, padre, flujo, esBackward")
+from constants import FUENTE, SUMIDERO
+from vertex_display import vertex_to_str
 
-class BFS(object):
+BfsElem = namedtuple("BfsElem", "vertice padre flujo esBackward")
 
-    
-    def __init__(self, matrizcap):
-        """
-        Genera el bfs a partir de la matriz de capacidades.
-        """
-        self.bfs = {} # La clave es el vertice y el valor es un BfsElem
-        self.llegoAlResumidero = False
-        self._cap = matrizcap
-        self._cacheCorteMinimal = [] # aca se va a guardar el corte minimal
 
-        for vecino in self._cap.gammaMas(fuente):
-            if self._cap.noEstaSaturado(fuente, vecino):
-                self.bfs[vecino]=(BfsElem(vecino,
-                                        fuente,
-                                        self._cap.capacidadActual(fuente,
-                                                                  vecino),
-                                        False))
-        iterador = list(self.bfs.keys())  # una lista para poder ir iterando
-        iterador.sort()
+class BFS:
+    """Búsqueda en anchura desde la fuente (orden: gamma_mas luego gamma_menos)."""
+
+    def __init__(self, matriz_cap):
+        self.linea1 = "("
+        self.linea2 = " "
+        self.linea3 = " "
+        self.bfs = {}
+        self.llego_al_sumidero = False
+        self._cap = matriz_cap
+        self._cache_corte_minimal = []
+
+        for vecino in self._cap.gamma_mas(FUENTE):
+            if self._cap.no_esta_saturado(FUENTE, vecino):
+                flujo = self._cap.capacidad_actual(FUENTE, vecino)
+                self.bfs[vecino] = BfsElem(vecino, FUENTE, flujo, False)
+                self.linea1 += ",%s    " % vertex_to_str(vecino)
+                self.linea2 += ",%s    " % vertex_to_str(FUENTE)
+                self.linea3 += ",%04d " % flujo
+
+        iterador = sorted(self.bfs.keys())
         for key in iterador:
             elem = self.bfs[key]
-            for vecino in self._cap.gammaMas(elem.vertice):
-                if self._estaEnBfs(vecino) == False:
-                    if self._cap.noEstaSaturado(elem.vertice, vecino):
+            for vecino in self._cap.gamma_mas(elem.vertice):
+                if not self._esta_en_bfs(vecino) and self._cap.no_esta_saturado(elem.vertice, vecino):
+                    flujo = min(
+                        self._cap.capacidad_actual(elem.vertice, vecino),
+                        self._flujo_bfs(elem.vertice),
+                    )
+                    self.bfs[vecino] = BfsElem(vecino, elem.vertice, flujo, False)
+                    self._append_lineas(vecino, elem.vertice, flujo, False)
+                    iterador.append(vecino)
+                    if vecino == SUMIDERO:
+                        self.llego_al_sumidero = True
+                        return None
+            for vecino in self._cap.gamma_menos(elem.vertice):
+                if not self._esta_en_bfs(vecino) and self._cap.tiene_flujo(vecino, elem.vertice):
+                    flujo = min(
+                        self._cap.flujo_actual(vecino, elem.vertice),
+                        self._flujo_bfs(elem.vertice),
+                    )
+                    self.bfs[vecino] = BfsElem(vecino, elem.vertice, flujo, True)
+                    self._append_lineas(vecino, elem.vertice, flujo, True)
+                    iterador.append(vecino)
 
-                        flujo = min(self._cap.capacidadActual(elem.vertice,
-                                                              vecino),
-                                    self._flujoBfs(elem.vertice))
+        if not self.llego_al_sumidero:
+            self._cache_corte_minimal = [FUENTE] + list(self.bfs.keys())
+        self.linea1 += ")"
 
-                        self.bfs[vecino]=(BfsElem(vecino,
-                                                elem.vertice,
-                                                flujo,
-                                                False))
-                        iterador.append(vecino) # lo agrego para iterar
-                        if vecino == resumidero:
-                            self.llegoAlResumidero = True
-                            return None
+    def _append_lineas(self, vecino, vertice, flujo, es_backward):
+        self.linea1 += ",%s    " % vertex_to_str(vecino)
+        if es_backward:
+            self.linea2 += ",%s-   " % vertex_to_str(vertice)
+        else:
+            self.linea2 += ",%s    " % vertex_to_str(vertice)
+        self.linea3 += ",%04d " % flujo
 
-            for vecino in self._cap.gammaMenos(elem.vertice):
-
-                if self._estaEnBfs(vecino) == False:
-                    if self._cap.tieneFlujo(vecino, elem.vertice):
-
-                        flujo = min(self._cap.flujoActual(vecino,
-                                                          elem.vertice),
-                                    self._flujoBfs(elem.vertice))
-
-                        self.bfs[vecino]=(BfsElem(vecino,
-                                                elem.vertice,
-                                                flujo,
-                                                True))
-                        iterador.append(vecino) # lo agrego para iterar
-
-        if not self.llegoAlResumidero:
-            self._cacheCorteMinimal = [0] + iterador
-            
-
-    def _flujoBfs(self, x):
-        """
-        Devuelve el flujo del vertice x en el BFS.
-        """
-        if x == fuente:
-            return float("inf")  # La fuente tiene un flujo infinito en el BFS
-
+    def _flujo_bfs(self, x):
+        if x == FUENTE:
+            return float("inf")
         return self.bfs[x].flujo
 
-
     def devolver(self, x):
-        """
-        Devuelve el BfsElem que representa a x en el BFS.
-        """
-        if x == fuente:
-            return BfsElem(fuente, "nan", float("inf"), False)
-
+        if x == FUENTE:
+            return BfsElem(FUENTE, None, float("inf"), False)
         return self.bfs[x]
 
+    def _esta_en_bfs(self, x):
+        return x == FUENTE or x in self.bfs
 
-    def _estaEnBfs(self, x):
-        """
-        Devuelve un booleano que dice si el vertice x ya esta en el BFS.
-        """
-        if x == fuente:
-            return True
-
-        return x in self.bfs
-
-    def resumideroEnBfs(self):
-        """
-        Devuelve el BfsElem que representa al resumidero, o si no llego
-        None.
-        """
-        if not self.llegoAlResumidero:
+    def resumidero_en_bfs(self):
+        if not self.llego_al_sumidero:
             return None
+        return self.bfs[SUMIDERO]
 
-        return self.bfs[resumidero]
+    def corte_minimal(self):
+        assert not self.llego_al_sumidero
+        return self._cache_corte_minimal
 
-    def corteMinimal(self):
-        """
-        PRE: No se pudo llegar al resumidero:
-        Devuelve la lista de los vertices que quedaron sin poder llegar al 
-        resumidero
-        """
-        assert not self.llegoAlResumidero
-
-        return self._cacheCorteMinimal
+    def __str__(self):
+        return "%s\n%s\n%s" % (self.linea1, self.linea2, self.linea3)

@@ -1,33 +1,25 @@
-#!/usr/bin/env python
-# encoding: utf-8
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-from api import *
+"""Punto de entrada Edmonds-Karp (versión letras)."""
 
-import optparse
+import argparse
+import sys
+
+from api import EstadoEK
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Edmonds-Karp: flujo máximo (entrada con letras).")
+    parser.add_argument("-v", "--verbose", type=int, default=0, help="Nivel de verbosidad")
+    args = parser.parse_args()
 
-    parser = optparse.OptionParser()
-    parser.add_option("-v", "--verbose",
-        help="Nivel de Verbosidad",
-        default=0)
-    options, args = parser.parse_args()
+    ek = EstadoEK(verbosidad=args.verbose)
+    flujo = ek.run(stream=sys.stdin)
 
-    ed = EstadoEK(options.verbose)
+    if flujo == -1:
+        print("\nError al aumentar el flujo\n", file=sys.stderr)
 
-    result = 1
-    while result == 1:
-        result = ed.leer_un_lado()
-
-    result = 1
-    while result == 1:
-        result = ed.aumentar_flujo()
-
-    if result == -1:
-        print("\nError al aumentar el flujo\n")
-    else:
-        ed.imprimir_flujo_maximal()
 
 if __name__ == "__main__":
     main()

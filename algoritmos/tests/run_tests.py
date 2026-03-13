@@ -22,6 +22,9 @@ TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(TESTS_DIR, "..", ".."))
 FLUJO_MAXIMO = os.path.join(TESTS_DIR, "flujo-maximo")
 
+# Nombre visible de cada implementación
+IMPL_DISPLAY_NAME = {"edmonds-karp-c": "Edmonds-Karp (C)"}
+
 # Implementaciones: nombre -> (comando, cwd). Todo el código es Python 3.
 def get_impls():
     impls = {}
@@ -33,11 +36,11 @@ def get_impls():
     ek_letras_dir = os.path.join(REPO_ROOT, "algoritmos", "edmonds-karp-letras")
     if os.path.isdir(ek_letras_dir):
         impls["edmonds-karp-letras"] = ([py, "main.py", "-v", "0"], ek_letras_dir)
-    # C: lab (./main)
-    lab_dir = os.path.join(REPO_ROOT, "algoritmos", "lab")
-    main_c = os.path.join(lab_dir, "main")
+    # C: Edmonds-Karp (./main)
+    ek_c_dir = os.path.join(REPO_ROOT, "algoritmos", "lab")
+    main_c = os.path.join(ek_c_dir, "main")
     if os.path.isfile(main_c) and os.access(main_c, os.X_OK):
-        impls["lab"] = ([os.path.join(lab_dir, "main")], lab_dir)
+        impls["edmonds-karp-c"] = ([os.path.join(ek_c_dir, "main")], ek_c_dir)
     # Dinic: grafo fijo, sin entrada
     dinic_dir = os.path.join(REPO_ROOT, "algoritmos", "dinic")
     dinic_py = os.path.join(dinic_dir, "dinic.py")
@@ -55,7 +58,7 @@ def expected_from_filename(name):
 
 
 def extract_flow_value(output):
-    """Extrae el valor del flujo maximal de la salida. Usa la última línea que indique flujo maximal (el lab imprime varias veces)."""
+    """Extrae el valor del flujo maximal de la salida. Usa la última línea que indique flujo maximal (Edmonds-Karp en C imprime varias veces)."""
     last_flow = None
     for line in output.splitlines():
         if "flujo" in line.lower() and "maximal" in line.lower():
@@ -110,7 +113,7 @@ def run_one_test(impl_name, cmd_and_cwd, test_path):
 
 def main():
     parser = argparse.ArgumentParser(description="Tests de flujo máximo para todos los algoritmos")
-    parser.add_argument("--impl", choices=["edmonds-karp", "edmonds-karp-letras", "lab", "dinic"], help="Solo esta implementación")
+    parser.add_argument("--impl", choices=["edmonds-karp", "edmonds-karp-letras", "edmonds-karp-c", "dinic"], help="Solo esta implementación")
     parser.add_argument("--list", action="store_true", help="Listar tests y salir")
     args = parser.parse_args()
 
@@ -122,7 +125,7 @@ def main():
     if args.impl:
         impls = {k: v for k, v in impls.items() if k == args.impl}
     if not impls:
-        print("Ninguna implementación disponible (lab requiere 'make' en algoritmos/lab).", file=sys.stderr)
+        print("Ninguna implementación disponible (Edmonds-Karp en C requiere 'make' en algoritmos/lab).", file=sys.stderr)
         print("El resto usa Python 3.", file=sys.stderr)
         sys.exit(1)
 
@@ -154,7 +157,8 @@ def main():
     total_ok = 0
     total_fail = 0
     for impl_name, cmd_cwd in impls.items():
-        print("\n--- {} ---".format(impl_name))
+        display = IMPL_DISPLAY_NAME.get(impl_name, impl_name)
+        print("\n--- {} ---".format(display))
         if impl_name == "dinic":
             got, err = run_one_test(impl_name, cmd_cwd, None)
             if err:

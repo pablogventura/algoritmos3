@@ -1,67 +1,49 @@
-#!/usr/bin/env python
-# encoding: utf-8
-from constants import *
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""Camino aumentante (versión letras)."""
+
 from collections import namedtuple
 
-# Named Tuple para representar cada elemento del camino aumentante
-CAElem = namedtuple("CAElem", "vertice, esBackward")
+from constants import FUENTE, SUMIDERO
+from vertex_display import vertex_to_str
+
+CAElem = namedtuple("CAElem", "vertice esBackward")
+
 
 class CaminoAumentante:
-    def __init__(self, bfs, matrizcap):
-        """
-        Calcula el camino aumentante a partir del bfs y la matriz de capacidades
-        """
-        self._camino=[] # lista que representa al camino aumentante
+    """Camino aumentante construido a partir del BFS."""
+
+    def __init__(self, bfs, matriz_cap):
+        self._camino = []
         self.bfs = bfs
-        self._cap = matrizcap
-        
-        aux = self.bfs.resumideroEnBfs() # toma el resumidero
+        self._cap = matriz_cap
 
-        self._flujo = aux.flujo # toma el flujo que es del camino aumentante
+        aux = self.bfs.resumidero_en_bfs()
+        if aux is None:
+            return
+        self._flujo = aux.flujo
+        self._camino.append(CAElem(aux.vertice, aux.esBackward))
 
-        self._camino.append(CAElem(aux.vertice, aux.esBackward)) # lo agrega
-        while aux.vertice != fuente: # cuando llegue a la fuente termino
+        while aux.vertice != FUENTE:
             if aux.esBackward:
-                self._cap.flujoBackward(aux.padre, aux.vertice, self._flujo)
+                self._cap.flujo_backward(aux.padre, aux.vertice, self._flujo)
             else:
-                self._cap.flujoForward(aux.padre, aux.vertice, self._flujo)
-
-            aux = self.bfs.devolver(aux.padre) # va buscando al padre para seguir
+                self._cap.flujo_forward(aux.padre, aux.vertice, self._flujo)
+            aux = self.bfs.devolver(aux.padre)
             self._camino.append(CAElem(aux.vertice, aux.esBackward))
 
-        self._camino.reverse() # quedo dado vuelta, lo arreglamos
-        
+        self._camino.reverse()
+
     def __len__(self):
-        """
-        Devuelve el largo del camino para poder ver el invariante del largo de
-        los caminos.
-        """
         return len(self._camino)
-        
+
     def flujo(self):
-        """
-        Devuelve el flujo del camino aumentante.
-        """
         return self._flujo
-        
+
     def __str__(self):
-        """
-        Devuelve un string con la impresion especificada.
-        """
-        strCamino = ""
-        for (vertice, esBackward) in self._camino:
-            if vertice == fuente:
-                vertice = "s"
-            elif vertice == resumidero:
-                vertice = "t"
-            else:
-                vertice = chr(vertice).upper()
-
-            if esBackward:
-                strCamino += "<" + str(vertice)
-            else:
-                strCamino += "," + str(vertice)
-
-        strCamino = strCamino[1:]  # Borro la primer coma
-
-        return strCamino + ": " + str(self.flujo())
+        partes = []
+        for (vertice, es_backward) in self._camino:
+            s = vertex_to_str(vertice)
+            partes.append("<" + s if es_backward else "," + s)
+        return "".join(partes)[1:] + ": " + str(self._flujo)
