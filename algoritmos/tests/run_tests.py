@@ -124,22 +124,22 @@ def extract_flow_value(output):
 
 
 def _imprimir_comparativa_tiempos(tiempos_ek, tests):
-    """Imprime tabla de tiempos entre las implementaciones Edmonds-Karp."""
+    """Imprime tabla de tiempos entre las implementaciones Edmonds-Karp (ordenadas por velocidad)."""
     if not tiempos_ek or not tests:
         return
     test_names = [t[0] for t in tests]
-    impls_orden = sorted(tiempos_ek.keys())
+    totales = {impl: sum(tiempos_ek[impl].get(name, 0) for name in test_names) for impl in tiempos_ek}
+    impls_orden = sorted(totales.keys(), key=lambda i: totales[i])
     w_name = min(28, max(10, max(len(n) for n in test_names) + 2))
     w_col = 11
     sep = "  "
-    print("\n--- Comparativa de tiempos (Edmonds-Karp) ---")
+    print("\n--- Comparativa de tiempos (Edmonds-Karp, de más rápido a más lento) ---")
     header_cells = ["Test".ljust(w_name)] + [
         IMPL_SHORT_NAME.get(i, IMPL_DISPLAY_NAME.get(i, i))[:w_col].ljust(w_col)
         for i in impls_orden
     ]
     print("  " + sep.join(header_cells))
     print("  " + "-" * (w_name + len(impls_orden) * (w_col + len(sep))))
-    totales = {impl: 0.0 for impl in impls_orden}
     for name in test_names:
         cells = [name[: w_name - 1].ljust(w_name)]
         for impl in impls_orden:
