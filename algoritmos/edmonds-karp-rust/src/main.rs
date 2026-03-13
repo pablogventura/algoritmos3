@@ -2,7 +2,7 @@
 //! Entrada: líneas "x y cap" por stdin. Fuente = 0, sumidero = 1.
 
 use std::collections::VecDeque;
-use std::io::{self, BufRead, Write};
+use std::io::{self, BufRead, BufReader, Write};
 
 type VertexId = usize;
 type EdgeId = usize;
@@ -37,8 +37,11 @@ struct Network {
 struct BfsInfo {
     in_cut: Vec<bool>,
     ancestor: Vec<Option<VertexId>>,
-    forward_edge: Vec<bool>,
+    /// Id de la arista por la que llegamos a cada vértice (evita búsqueda lineal en increase_flow).
+    ancestor_edge: Vec<Option<EdgeId>>,
     accumulated_flow: Vec<u64>,
+    /// Cola reutilizada entre BFS para evitar allocs en el bucle principal.
+    queue: VecDeque<VertexId>,
 }
 
 impl Network {
@@ -90,21 +93,22 @@ impl Network {
     }
 
     /// BFS desde source hacia sink. Devuelve true si hay camino aumentante.
-    /// Rellena BfsInfo: cut, ancestor, forward_edge, accumulated_flow.
+    /// Rellena BfsInfo: cut, ancestor, ancestor_edge, accumulated_flow.
     fn find_shortest_augmenting_path(&mut self, info: &mut BfsInfo) -> bool {
         let n = self.num_vertices();
         info.in_cut.fill(false);
         for i in 0..n {
             info.ancestor[i] = None;
+            info.ancestor_edge[i] = None;
             info.accumulated_flow[i] = u64::MAX;
         }
 
-        let mut queue = VecDeque::new();
-        queue.push_back(self.source);
+        info.queue.clear();
+        info.queue.push_back(self.source);
         info.in_cut[self.source] = true;
         info.accumulated_flow[self.source] = u64::MAX;
 
-        while let Some(v) = queue.pop_front() {
+        while let Some(v) = info.queue.pop_front() {
             if v == self.sink {
                 return true;
             }
@@ -116,10 +120,10 @@ impl Network {
                 if residual > 0 && !info.in_cut[w] {
                     info.in_cut[w] = true;
                     info.ancestor[w] = Some(v);
-                    info.forward_edge[w] = true;
+                    info.ancestor_edge[w] = Some(eid);
                     info.accumulated_flow[w] = info.accumulated_flow[v]
                         .min(residual);
-                    queue.push_back(w);
+                    info.queue.push_back(w);
                 }
             }
             // Backward: aristas entrantes con flujo > 0
@@ -129,10 +133,10 @@ impl Network {
                 if edge.flow > 0 && !info.in_cut[w] {
                     info.in_cut[w] = true;
                     info.ancestor[w] = Some(v);
-                    info.forward_edge[w] = false;
+                    info.ancestor_edge[w] = Some(eid);
                     info.accumulated_flow[w] = info.accumulated_flow[v]
                         .min(edge.flow as u64);
-                    queue.push_back(w);
+                    info.queue.push_back(w);
                 }
             }
         }
@@ -140,6 +144,7 @@ impl Network {
     }
 
     /// Aumenta el flujo a lo largo del camino encontrado por BFS. Devuelve epsilon.
+    /// Usa ancestor_edge para O(1) por paso (sin buscar la arista en las listas).
     fn increase_flow(&mut self, info: &BfsInfo, max_flow: &mut u64) -> u32 {
         let epsilon = info.accumulated_flow[self.sink] as u32;
         *max_flow += epsilon as u64;
@@ -147,14 +152,12 @@ impl Network {
         let mut v = self.sink;
         while v != self.source {
             let u = info.ancestor[v].unwrap();
-            if info.forward_edge[v] {
-                // Arista u -> v (forward): aumentar flujo en la arista u->v
-                let eid = self.vertices[v].backward_edges.iter().copied().find(|&eid| self.edges[eid].from == u).unwrap();
-                self.edges[eid].flow += epsilon;
+            let eid = info.ancestor_edge[v].unwrap();
+            let edge = &mut self.edges[eid];
+            if edge.from == u {
+                edge.flow += epsilon;
             } else {
-                // Arista v -> u (backward): disminuir flujo en la arista v->u
-                let eid = self.vertices[v].forward_edges.iter().copied().find(|&eid| self.edges[eid].to == u).unwrap();
-                self.edges[eid].flow -= epsilon;
+                edge.flow -= epsilon;
             }
             v = u;
         }
@@ -164,10 +167,11 @@ impl Network {
 
 fn main() -> io::Result<()> {
     let stdin = io::stdin();
+    let reader = BufReader::with_capacity(256 * 1024, stdin.lock());
     let mut network = Network::new();
 
     // Leer red desde stdin: "x y cap"
-    for line in stdin.lock().lines() {
+    for line in reader.lines() {
         let line = line?;
         let line = line.trim();
         if line.is_empty() {
@@ -198,8 +202,9 @@ fn main() -> io::Result<()> {
     let mut info = BfsInfo {
         in_cut: vec![false; n],
         ancestor: vec![None; n],
-        forward_edge: vec![false; n],
+        ancestor_edge: vec![None; n],
         accumulated_flow: vec![0; n],
+        queue: VecDeque::with_capacity(n),
     };
 
     let mut max_flow: u64 = 0;
