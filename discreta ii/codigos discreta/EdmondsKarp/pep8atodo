@@ -1,5 +1,0 @@
-pep8 main.py
-pep8 api.py
-pep8 matrizcap.py
-pep8 constants.py
-rm *.pyc
