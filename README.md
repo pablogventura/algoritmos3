@@ -7,11 +7,10 @@ Material y códigos de la materia Matemática Discreta II (cursado y luego como 
 | Carpeta | Contenido |
 |---------|-----------|
 | **practicos/** | Código por práctico: `practico1`, `practico2`, `practico4` … `practico8` (una sola copia por archivo, la más nueva) |
-| **algoritmos/** | Implementaciones: `edmonds-karp`, `edmonds-karp-letras`, `dinic`, `np` |
+| **algoritmos/** | Implementaciones: `edmonds-karp`, `edmonds-karp-letras`, `dinic`, `np`, `lab` (Edmonds-Karp en C, TP de laboratorio) |
 | **docs/referencia** | Apuntes y material de referencia (PDF) |
 | **docs/enunciados** | Enunciados de prácticos (PDF) |
 | **docs/final** | Material del final (PDFs); el código del final está en `algoritmos/` y en `practicos/` |
-| **lab/** | Trabajo práctico de laboratorio (fuentes C, informe, ejemplos) |
 | **logs/** | Salidas de consola y mediciones de tiempo |
 
 ## Notas
